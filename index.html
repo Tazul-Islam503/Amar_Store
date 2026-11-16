@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Dashboard - Inventory System</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 font-sans">
+
+<div class="flex h-screen overflow-hidden">
+    <!-- বাম পাশের সাইডবার মেনু (Master Navigation with Groups) -->
+    <aside class="w-72 bg-slate-900 text-white flex flex-col shadow-lg overflow-y-auto">
+        <div class="p-5 text-xl font-bold border-b border-slate-700 flex items-center gap-2 sticky top-0 bg-slate-900 z-10">
+            <i class="fa-solid fa-boxes-stacked text-blue-400"></i>
+            <span>Store Master</span>
+        </div>
+        
+        <nav class="flex-1 p-4 space-y-4 text-sm">
+            <!-- ড্যাশবোর্ড হোম -->
+            <a href="index.html" class="flex items-center gap-3 px-4 py-2.5 rounded bg-blue-600 text-white font-medium">
+                <i class="fa-solid fa-chart-pie w-5"></i> Dashboard
+            </a>
+
+            <!-- Issue Group -->
+            <div class="space-y-1">
+                <p class="text-xs font-semibold text-slate-400 uppercase px-4 tracking-wider">Issue</p>
+                <a href="#" onclick="showAlert('Stock Issue Form')" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 text-slate-300">
+                    <i class="fa-solid fa-angle-right text-xs text-amber-400"></i> Stock Issue Form
+                </a>
+                <a href="#" onclick="showAlert('Issue List')" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 text-slate-300">
+                    <i class="fa-solid fa-angle-right text-xs text-amber-400"></i> Issue List
+                </a>
+                <a href="#" onclick="showAlert('Update Issue')" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 text-slate-300">
+                    <i class="fa-solid fa-angle-right text-xs text-amber-400"></i> Update Issue
+                </a>
+            </div>
+
+            <!-- MRR Group -->
+            <div class="space-y-1">
+                <p class="text-xs font-semibold text-slate-400 uppercase px-4 tracking-wider">MRR</p>
+                <a href="#" onclick="showAlert('MRR Form')" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 text-slate-300">
+                    <i class="fa-solid fa-angle-right text-xs text-green-400"></i> MRR Form
+                </a>
+                <a href="#" onclick="showAlert('MRR List')" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 text-slate-300">
+                    <i class="fa-solid fa-angle-right text-xs text-green-400"></i> MRR List
+                </a>
+                <a href="#" onclick="showAlert('MRR Update')" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 text-slate-300">
+                    <i class="fa-solid fa-angle-right text-xs text-green-400"></i> MRR Update
+                </a>
+            </div>
+
+            <!-- Transfer Group -->
+            <div class="space-y-1">
+                <p class="text-xs font-semibold text-slate-400 uppercase px-4 tracking-wider">Transfer</p>
+                <a href="#" onclick="showAlert('Transfer Out')" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 text-slate-300">
+                    <i class="fa-solid fa-angle-right text-xs text-purple-400"></i> Transfer Out
+                </a>
+                <a href="#" onclick="showAlert('Transfer In')" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 text-slate-300">
+                    <i class="fa-solid fa-angle-right text-xs text-purple-400"></i> Transfer In
+                </a>
+                <a href="#" onclick="showAlert('Transfer Out Report')" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 text-slate-300">
+                    <i class="fa-solid fa-angle-right text-xs text-purple-400"></i> Transfer out report
+                </a>
+                <a href="#" onclick="showAlert('Transfer In Report')" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 text-slate-300">
+                    <i class="fa-solid fa-angle-right text-xs text-purple-400"></i> Transfer In Report
+                </a>
+                <a href="#" onclick="showAlert('Update Transfer In')" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 text-slate-300">
+                    <i class="fa-solid fa-angle-right text-xs text-purple-400"></i> Update Transfer In
+                </a>
+                <a href="#" onclick="showAlert('Update Transfer Out')" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 text-slate-300">
+                    <i class="fa-solid fa-angle-right text-xs text-purple-400"></i> Update Transfer Out
+                </a>
+            </div>
+
+            <!-- Stock & Setup Group -->
+            <div class="space-y-1">
+                <p class="text-xs font-semibold text-slate-400 uppercase px-4 tracking-wider">Stock & Setup</p>
+                <a href="#" onclick="showAlert('Stock Summary')" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 text-slate-300">
+                    <i class="fa-solid fa-angle-right text-xs text-cyan-400"></i> Stock Summary
+                </a>
+                <a href="#" onclick="showAlert('Safety Stock')" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 text-slate-300">
+                    <i class="fa-solid fa-angle-right text-xs text-cyan-400"></i> Safety Stock
+                </a>
+                <a href="#" onclick="showAlert('Stock with Location')" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 text-slate-300">
+                    <i class="fa-solid fa-angle-right text-xs text-cyan-400"></i> Stock with Location
+                </a>
+                <a href="#" onclick="showAlert('Assign Location')" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 text-slate-300">
+                    <i class="fa-solid fa-angle-right text-xs text-rose-400"></i> Assign Location
+                </a>
+                <a href="#" onclick="showAlert('Group, Category')" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 text-slate-300">
+                    <i class="fa-solid fa-angle-right text-xs text-rose-400"></i> Group, Category
+                </a>
+                <a href="#" onclick="showAlert('Update Location, group, Category')" class="flex items-center gap-3 px-4 py-2 rounded hover:bg-slate-800 text-slate-300">
+                    <i class="fa-solid fa-angle-right text-xs text-rose-400"></i> Update Location, group, Category
+                </a>
+            </div>
+        </nav>
+        
+        <div class="p-4 border-t border-slate-800 text-xs text-slate-400 text-center">
+            Max Infrastructure Ltd - DCRP
+        </div>
+    </aside>
+
+    <!-- ডান পাশের মেইন কন্টেন্ট এরিয়া -->
+    <main class="flex-1 overflow-y-auto p-8">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">স্বাগতম, ইনভেন্টরি ড্যাশবোর্ডে</h1>
+            <p class="text-gray-500 mt-1">বাম পাশের মেনু থেকে আপনার প্রয়োজনীয় অপারেশন পেজ সিলেক্ট করুন।</p>
+        </header>
+
+        <!-- শর্টকাট কার্ড সেকশন -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-lg shadow border-l-4 border-green-500">
+                <p class="text-gray-500 text-sm">Quick Action</p>
+                <h3 class="text-xl font-bold text-gray-800 mt-1">MRR Form</h3>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border-l-4 border-amber-500">
+                <p class="text-gray-500 text-sm">Quick Action</p>
+                <h3 class="text-xl font-bold text-gray-800 mt-1">Stock Issue Form</h3>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500">
+                <p class="text-gray-500 text-sm">Inventory</p>
+                <h3 class="text-xl font-bold text-gray-800 mt-1">Stock Summary</h3>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- জাভাস্ক্রিপ্ট অ্যালার্ট ফাংশন -->
+<script>
+    function showAlert(pageName) {
+        event.preventDefault();
+        alert(pageName + ' পেজের লিঙ্কের কোড এখানে বসবে।');
+    }
+</script>
+
+</body>
+</html>
