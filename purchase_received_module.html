@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Materials Purchase Tracker</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Hind Siliguri -->
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Firebase JS SDK v9 -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+  <style>
+    body {
+      font-family: 'Hind Siliguri', sans-serif;
+      background-color: #f1f5f9;
+    }
+    input:focus, select:focus {
+      outline: none;
+      box-shadow: inset 0 0 0 2px #2563eb;
+    }
+    /* ড্রপডাউন লিস্ট যেন সবসময় সবার উপরে থাকে এবং কোনো ডিভের নিচে ঢাকা না পড়ে */
+    .suggestions-box {
+      position: absolute !important;
+      left: 0;
+      right: 0;
+      top: 100%;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-top: none;
+      max-height: 180px;
+      overflow-y: auto;
+      z-index: 999999 !important;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+      text-align: left;
+    }
+    .suggestions-box li {
+      padding: 8px 10px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .suggestions-box li.active, .suggestions-box li:hover {
+      background-color: #007bff;
+      color: white;
+    }
+    .stock-tag {
+      font-size: 11px;
+      background: #28a745;
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+    .suggestions-box li.active .stock-tag {
+      background: #fff;
+      color: #007bff;
+    }
+  </style>
+</head>
+<body class="p-2 md:p-6 min-h-screen text-slate-800">
+
+  <div class="max-w-[1500px] mx-auto bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+    
+    <!-- Title Bar -->
+    <div class="bg-gradient-to-r from-blue-700 to-indigo-800 p-4 text-white">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+        <div>
+          <h1 class="text-xl md:text-2xl font-bold tracking-wide">Material_Purchase</h1>
+         
+        </div>
+      </div>
+    </div>
+
+    <form id="purchaseForm" onsubmit="handleFormSubmit(event)">
+      <!-- Header Information Grid -->
+      <div class="p-4 md:p-6 bg-slate-50 border-b border-slate-200">
+        <div class="max-w-4xl mx-auto space-y-3">
+          
+          <!-- ১. কারেন্ট ডেট -->
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+            <label class="w-full sm:w-48 text-xs font-semibold text-slate-700">১. কারেন্ট ডেট</label>
+            <div class="w-full sm:flex-1">
+              <input type="date" id="currentDate" class="hdr-input w-full px-3 py-1.5 text-sm border border-slate-300 rounded bg-white font-medium" required>
+            </div>
+          </div>
+
+          <!-- ২. রিকুইজিশন নাম্বার -->
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+            <label class="w-full sm:w-48 text-xs font-semibold text-slate-700">২. রিকুইজিশন নাম্বার</label>
+            <div class="w-full sm:flex-1">
+              <input type="text" id="reqNo" placeholder="REQ-0001" class="hdr-input w-full px-3 py-1.5 text-sm border border-slate-300 rounded bg-white font-medium" required>
+            </div>
+          </div>
+
+          <!-- ৩. সাপ্লায়ার নেম -->
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+            <label class="w-full sm:w-48 text-xs font-semibold text-slate-700">৩. সাপ্লায়ার নাম</label>
+            <div class="w-full sm:flex-1 relative">
+              <input type="text" id="supplierName" autocomplete="off" placeholder="সাপ্লায়ার টাইপ করুন..." class="hdr-input dropdown-trigger w-full px-3 py-1.5 text-sm border border-slate-300 rounded bg-white font-medium" required data-type="supplier">
+              <ul class="suggestions-box hidden"></ul>
+            </div>
+          </div>
+
+          <!-- ৪. সাপ্লায়ার নাম্বার (Required) -->
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+            <label class="w-full sm:w-48 text-xs font-semibold text-slate-700">৪. চালান নাম্বার <span class="text-red-500">*</span></label>
+            <div class="w-full sm:flex-1">
+              <input type="text" id="supplierNum" placeholder="01700000000" class="hdr-input w-full px-3 py-1.5 text-sm border border-slate-300 rounded bg-white font-medium" required>
+            </div>
+          </div>
+
+          <!-- ৫. চালান ডেট (Required) -->
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+            <label class="w-full sm:w-48 text-xs font-semibold text-slate-700">৫. চালান ডেট <span class="text-red-500">*</span></label>
+            <div class="w-full sm:flex-1">
+              <input type="date" id="challanDate" class="hdr-input w-full px-3 py-1.5 text-sm border border-slate-300 rounded bg-white font-medium" required>
+            </div>
+          </div>
+
+          <!-- ৬. ERP MRR -->
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+            <label class="w-full sm:w-48 text-xs font-semibold text-slate-700">৬. ERP MRR</label>
+            <div class="w-full sm:flex-1">
+              <input type="text" id="erpMrr" placeholder="ERP MRR নম্বর" class="hdr-input w-full px-3 py-1.5 text-sm border border-slate-300 rounded bg-white font-medium">
+            </div>
+          </div>
+
+          <!-- ৭. হেডার রিমার্কস -->
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+            <label class="w-full sm:w-48 text-xs font-semibold text-slate-700">৭. রিমার্কস</label>
+            <div class="w-full sm:flex-1">
+              <input type="text" id="headerRemarks" placeholder="মন্তব্য (যদি থাকে)" class="hdr-input w-full px-3 py-1.5 text-sm border border-slate-300 rounded bg-white font-medium">
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Main Items Table -->
+      <div class="p-4 md:p-6" style="overflow: visible !important;">
+        <table class="w-full text-left border-collapse border border-slate-300 text-sm" style="overflow: visible !important;">
+          <thead>
+            <tr class="bg-slate-200 text-slate-700 font-bold">
+              <th class="border border-slate-300 px-3 py-2 w-12 text-center">SL</th>
+              <th class="border border-slate-300 px-3 py-2 min-w-[200px]">১. ম্যাটেরিয়ালস নেম <span class="text-red-500">*</span></th>
+              <th class="border border-slate-300 px-3 py-2 w-28">২. ইউনিট <span class="text-red-500">*</span></th>
+              <th class="border border-slate-300 px-3 py-2 w-28 text-right">৩. কোয়ান্টিটি <span class="text-red-500">*</span></th>
+              <th class="border border-slate-300 px-3 py-2 w-32 text-right">৪. টোটাল (টাকা)</th>
+              <th class="border border-slate-300 px-3 py-2 w-28 text-right bg-slate-300">৫. রেট (Auto)</th>
+              <th class="border border-slate-300 px-3 py-2 min-w-[170px]">৬. রিকুয়েস্ট / পারচেস ফর <span class="text-red-500">*</span></th>
+              <th class="border border-slate-300 px-3 py-2 min-w-[160px]">৭. ফিজিক্যাল আইডেন্টিটি</th>
+              <th class="border border-slate-300 px-3 py-2 min-w-[150px]">৮. রিমার্কস</th>
+              <th class="border border-slate-300 px-2 py-2 w-10 text-center"></th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+          <tfoot>
+            <tr class="bg-slate-100 font-bold text-slate-800">
+              <td colspan="3" class="border border-slate-300 px-3 py-2 text-right">সর্বমোট:</td>
+              <td id="grandQty" class="border border-slate-300 px-3 py-2 text-right text-blue-700 font-bold">0.00</td>
+              <td id="grandTotal" class="border border-slate-300 px-3 py-2 text-right text-emerald-700 font-bold">0.00</td>
+              <td colspan="5" class="border border-slate-300 bg-slate-200 text-right p-2">
+                <button type="submit" id="submitBtn" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-sm rounded-lg shadow transition inline-flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                  Submit
+                </button>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </form>
+
+  </div>
+
+  <!-- Warning Alert Modal -->
+  <div id="alertModal" class="fixed inset-0 bg-slate-900/60 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-amber-200 max-w-sm w-full p-6 text-center">
+      <div class="w-14 h-14 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl font-bold">⚠️</div>
+      <h3 class="text-lg font-bold text-slate-800 mb-1">অসম্পূর্ণ ডাটা!</h3>
+      <p id="alertMessage" class="text-xs text-slate-600 mb-5">সঠিক তথ্য দিন।</p>
+      <button type="button" onclick="closeAlertModal()" class="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm rounded-xl transition">ঠিক আছে</button>
+    </div>
+  </div>
+
+  <!-- LMR Success Popup Modal -->
+  <div id="lmrModal" class="fixed inset-0 bg-slate-900/60 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full p-6 text-center">
+      <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">✓</div>
+      <h3 class="text-xl font-bold text-slate-800 mb-1">ডাটা সফলভাবে পোস্ট ও স্টক আপডেট হয়েছে!</h3>
+      <p class="text-sm text-slate-500 mb-4">নিচের লোকাল MRR পোস্টিং নম্বরটি নোট করে রাখুন:</p>
+      
+      <div class="bg-slate-100 border-2 border-dashed border-emerald-500 rounded-xl p-4 mb-6">
+        <span class="text-xs text-slate-400 block uppercase font-bold tracking-wider mb-1">Local MRR Posting No</span>
+        <span id="modalLmrNo" class="text-3xl font-extrabold text-emerald-600 tracking-widest font-mono">LMR-00001</span>
+      </div>
+
+      <button type="button" onclick="closeLmrModal()" class="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl shadow transition">ঠিক আছে, ক্লোজ করুন</button>
+    </div>
+  </div>
+   <!---Back to home---->
+ <a href="index.html" class="flex items-center gap-3 px-4 py-2.5 rounded bg-blue-600 text-white font-medium" id="back">
+                <i class="fa-solid fa-chart-pie w-5"></i> Back</a>
+
+  <script>
+    const defaultFirebaseConfig = {
+      apiKey: "AIzaSyCQV_4nv_ohzevtZRxLj3Aq4kVafVEiLKw",
+      authDomain: "tazul503.firebaseapp.com",
+      databaseURL: "https://tazul503-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "tazul503",
+      storageBucket: "tazul503.firebasestorage.app",
+      messagingSenderId: "190926921011",
+      appId: "1:190926921011:web:77822854066e6a840f3246"
+    };
+
+    let firebaseDb = null;
+    let productDatabase = [];
+    // ডিফল্ট সাপ্লায়ার লিস্টের সাথে ফায়ারবেসের রিসিভ ডেটা ডায়নামিক্যালি যুক্ত হবে
+    let dynamicSuppliers = ['BSRM Steels Ltd', 'Seven Rings Cement', 'Crown Cement PLC', 'Shah Cement', 'AKG Steel', 'Bashundhara Paper', 'Local Supplier'];
+
+    function initFirebase() {
+      try {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(defaultFirebaseConfig);
+        }
+        firebaseDb = firebase.database();
+        fetchStockSummary();
+        fetchReceivingSuppliers(); // রিসিভ ডেটা থেকে সাপ্লায়ার ফেচ করার ফাংশন
+      } catch(e) {
+        console.error("Firebase Init Error:", e);
+      }
+    }
+
+    function fetchStockSummary() {
+      if (!firebaseDb) return;
+      firebaseDb.ref('stock_summary').on('value', (snapshot) => {
+        const data = snapshot.val();
+        productDatabase = [];
+        if (data) {
+          Object.values(data).forEach(item => {
+            if (item.name) {
+              productDatabase.push({
+                name: item.name.toString().trim(),
+                unit: item.unit ? item.unit.toString().trim() : "Pcs",
+                stock: parseFloat(item.stock) || 0
+              });
+            }
+          });
+        }
+      });
+    }
+
+    // ফায়ারবেসের 'material_purchase' (রিসিভিং ডাটা) থেকে ইউনিক সাপ্লায়ার নেম ফেচ করা
+    function fetchReceivingSuppliers() {
+      if (!firebaseDb) return;
+      firebaseDb.ref('material_purchase').on('value', (snapshot) => {
+        const data = snapshot.val();
+        let supSet = new Set(['BSRM Steels Ltd', 'Seven Rings Cement', 'Crown Cement PLC', 'Shah Cement', 'AKG Steel', 'Bashundhara Paper', 'Local Supplier']);
+        
+        if (data) {
+          Object.values(data).forEach(record => {
+            if (record.supplierName && record.supplierName.trim() !== '') {
+              supSet.add(record.supplierName.trim());
+            }
+          });
+        }
+        dynamicSuppliers = Array.from(supSet);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('currentDate').valueAsDate = new Date();
+      initFirebase();
+      addNewRow();
+    });
+
+    function formatStockValue(val) {
+      let num = parseFloat(val);
+      if (isNaN(num)) return "0";
+      return Number.isInteger(num) ? num.toString() : num.toFixed(2);
+    }
+
+    document.addEventListener('input', (e) => {
+      const target = e.target;
+
+      if (target.classList.contains('dropdown-trigger')) {
+        const query = target.value.trim().toLowerCase();
+        const cell = target.closest('td') || target.closest('div.relative');
+        const suggestionsBox = cell ? cell.querySelector('.suggestions-box') : null;
+
+        if (!suggestionsBox) return;
+        suggestionsBox.innerHTML = '';
+        if (!query) {
+          suggestionsBox.classList.add('hidden');
+          return;
+        }
+
+        const type = target.dataset.type;
+        let matches = [];
+
+        if (type === 'material') {
+          matches = productDatabase.filter(p => p.name.toLowerCase().includes(query));
+          matches.forEach((item, idx) => {
+            const li = document.createElement('li');
+            li.setAttribute('data-name', item.name);
+            li.setAttribute('data-unit', item.unit);
+            li.innerHTML = `<span class="item-name">${item.name}</span> <span class="stock-tag">Stock: ${formatStockValue(item.stock)} ${item.unit}</span>`;
+            if (idx === 0) li.classList.add('active');
+
+            li.onmousedown = (ev) => {
+              ev.preventDefault();
+              selectMaterialItem(target, item.name, item.unit);
+            };
+            suggestionsBox.appendChild(li);
+          });
+        } else if (type === 'unit') {
+          matches = PRESETS.unit.filter(u => u.toLowerCase().includes(query));
+          matches.forEach((u, idx) => {
+            const li = document.createElement('li');
+            li.textContent = u;
+            if (idx === 0) li.classList.add('active');
+            li.onmousedown = (ev) => {
+              ev.preventDefault();
+              target.value = u;
+              suggestionsBox.classList.add('hidden');
+            };
+            suggestionsBox.appendChild(li);
+          });
+        } else if (type === 'supplier') {
+          // রিসিভ ডেটা থেকে আসা ডায়নামিক ও ইউনিক সাপ্লায়ার লিস্ট ফিল্টার করা হচ্ছে
+          matches = dynamicSuppliers.filter(s => s.toLowerCase().includes(query));
+          matches.forEach((sup, idx) => {
+            const li = document.createElement('li');
+            li.textContent = sup;
+            if (idx === 0) li.classList.add('active');
+            li.onmousedown = (ev) => {
+              ev.preventDefault();
+              target.value = sup;
+              suggestionsBox.classList.add('hidden');
+            };
+            suggestionsBox.appendChild(li);
+          });
+        }
+
+        if (matches.length > 0) {
+          suggestionsBox.classList.remove('hidden');
+        } else {
+          suggestionsBox.classList.add('hidden');
+        }
+      }
+    });
+
+    const PRESETS = {
+      unit: ['Kg', 'Ton', 'Bag', 'Pcs', 'Cft', 'Sft', 'Ltr', 'Meter', 'Coil', 'Box', 'Drum', 'Set']
+    };
+
+    function selectMaterialItem(inputEl, nameVal, unitVal) {
+      inputEl.value = nameVal;
+      const tr = inputEl.closest('tr');
+      if (tr) {
+        const unitInput = tr.querySelector('.cell-unit');
+        if (unitInput) unitInput.value = unitVal;
+        calculateRow(tr);
+      }
+      const suggestionsBox = inputEl.closest('td').querySelector('.suggestions-box');
+      if (suggestionsBox) suggestionsBox.classList.add('hidden');
+
+      const inputs = Array.from(tr ? tr.querySelectorAll('input:not([readonly])') : document.querySelectorAll('.hdr-input'));
+      const currIdx = inputs.indexOf(inputEl);
+      if (currIdx >= 0 && currIdx < inputs.length - 1) {
+        inputs[currIdx + 1].focus();
+      }
+    }
+
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('td') && !e.target.closest('div.relative')) {
+        document.querySelectorAll('.suggestions-box').forEach(box => box.classList.add('hidden'));
+      }
+    });
+
+    document.addEventListener('keydown', function(e) {
+      const currentInput = e.target;
+      if (currentInput.tagName !== 'INPUT') return;
+
+      const cell = currentInput.closest('td') || currentInput.closest('div.relative');
+      const suggestionsBox = cell ? cell.querySelector('.suggestions-box') : null;
+      const hasSuggestions = suggestionsBox && !suggestionsBox.classList.contains('hidden') && suggestionsBox.children.length > 0;
+
+      if (hasSuggestions && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+        e.preventDefault();
+        const items = Array.from(suggestionsBox.querySelectorAll('li'));
+        let activeIndex = items.findIndex(item => item.classList.contains('active'));
+
+        if (activeIndex >= 0) items[activeIndex].classList.remove('active');
+
+        if (e.key === 'ArrowDown') {
+          activeIndex = (activeIndex + 1) % items.length;
+        } else if (e.key === 'ArrowUp') {
+          activeIndex = (activeIndex - 1 + items.length) % items.length;
+        }
+
+        items[activeIndex].classList.add('active');
+        items[activeIndex].scrollIntoView({ block: 'nearest' });
+        return;
+      }
+
+      if (hasSuggestions && e.key === 'Enter') {
+        const activeItem = suggestionsBox.querySelector('li.active');
+        if (activeItem) {
+          e.preventDefault();
+          if (currentInput.classList.contains('cell-name')) {
+            const nameVal = activeItem.getAttribute('data-name') || activeItem.querySelector('.item-name').textContent;
+            const unitVal = activeItem.getAttribute('data-unit') || "Pcs";
+            selectMaterialItem(currentInput, nameVal, unitVal);
+          } else {
+            currentInput.value = activeItem.textContent;
+            suggestionsBox.classList.add('hidden');
+            if (currentInput.classList.contains('hdr-input')) {
+              const hdrInputs = Array.from(document.querySelectorAll('.hdr-input'));
+              const hIdx = hdrInputs.indexOf(currentInput);
+              if (hIdx < hdrInputs.length - 1) hdrInputs[hIdx + 1].focus();
+            }
+          }
+          return;
+        }
+      }
+
+      if (!hasSuggestions && currentInput.classList.contains('hdr-input')) {
+        const hdrInputs = Array.from(document.querySelectorAll('.hdr-input'));
+        const hIdx = hdrInputs.indexOf(currentInput);
+
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (hIdx < hdrInputs.length - 1) {
+            hdrInputs[hIdx + 1].focus();
+          } else {
+            const firstRowInput = document.querySelector('#tableBody tr input');
+            if (firstRowInput) firstRowInput.focus();
+          }
+          return;
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (hIdx > 0) {
+            hdrInputs[hIdx - 1].focus();
+          }
+          return;
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          if (hIdx < hdrInputs.length - 1) {
+            hdrInputs[hIdx + 1].focus();
+          } else {
+            const firstRowInput = document.querySelector('#tableBody tr input');
+            if (firstRowInput) firstRowInput.focus();
+          }
+          return;
+        }
+      }
+
+      if (!hasSuggestions && currentInput.closest('#tableBody')) {
+        const tr = currentInput.closest('tr');
+        if (tr) {
+          const rows = Array.from(document.querySelectorAll('#tableBody tr'));
+          const rIdx = rows.indexOf(tr);
+          const rowInputs = Array.from(tr.querySelectorAll('input:not([readonly])'));
+          const cIdx = rowInputs.indexOf(currentInput);
+
+          if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            if (cIdx < rowInputs.length - 1) rowInputs[cIdx + 1].focus();
+            return;
+          } else if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            if (cIdx > 0) rowInputs[cIdx - 1].focus();
+            return;
+          } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (rIdx < rows.length - 1) {
+              const nextInputs = rows[rIdx + 1].querySelectorAll('input:not([readonly])');
+              if (nextInputs[cIdx]) nextInputs[cIdx].focus();
+            }
+            return;
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (rIdx > 0) {
+              const prevInputs = rows[rIdx - 1].querySelectorAll('input:not([readonly])');
+              if (prevInputs[cIdx]) prevInputs[cIdx].focus();
+            } else {
+              const hdrInputs = Array.from(document.querySelectorAll('.hdr-input'));
+              if (hdrInputs.length > 0) hdrInputs[hdrInputs.length - 1].focus();
+            }
+            return;
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (cIdx < rowInputs.length - 1) {
+              rowInputs[cIdx + 1].focus();
+            } else {
+              const isNameValid = tr.querySelector('.cell-name').value.trim() !== '';
+              if (isNameValid) {
+                if (rIdx === rows.length - 1) {
+                  addNewRow();
+                }
+                const nextRowFirst = rows[rIdx + 1] ? rows[rIdx + 1].querySelector('input') : document.querySelector('#tableBody tr:last-child input');
+                if (nextRowFirst) nextRowFirst.focus();
+              } else {
+                showAlertModal("নতুন রো জেনারেট করার পূর্বে ম্যাটেরিয়ালস নেম পূরণ করুন।");
+              }
+            }
+            return;
+          }
+        }
+      }
+    });
+
+    function showAlertModal(msg) {
+      document.getElementById('alertMessage').innerText = msg;
+      document.getElementById('alertModal').classList.remove('hidden');
+    }
+
+    function closeAlertModal() {
+      document.getElementById('alertModal').classList.add('hidden');
+    }
+
+    function addNewRow() {
+      const body = document.getElementById('tableBody');
+      const rowCount = body.querySelectorAll('tr').length + 1;
+      const tr = document.createElement('tr');
+      tr.className = "hover:bg-slate-50 transition border-b border-slate-200";
+
+      tr.innerHTML = `
+        <td class="border border-slate-300 px-3 py-1.5 text-center font-semibold text-slate-500 sl-no">${rowCount}</td>
+        
+        <td class="border border-slate-300 p-1 relative" style="overflow: visible;">
+          <input type="text" class="cell-name dropdown-trigger w-full px-2 py-1 text-sm border-0 focus:bg-blue-50 font-medium" placeholder="ম্যাটেরিয়াল নাম..." data-type="material" autocomplete="off">
+          <ul class="suggestions-box hidden"></ul>
+        </td>
+
+        <td class="border border-slate-300 p-1 relative" style="overflow: visible;">
+          <input type="text" class="cell-unit dropdown-trigger w-full px-2 py-1 text-sm border-0 focus:bg-blue-50" placeholder="Kg/Bag" data-type="unit" autocomplete="off">
+          <ul class="suggestions-box hidden"></ul>
+        </td>
+
+        <td class="border border-slate-300 p-1">
+          <input type="number" step="any" min="0" class="cell-qty w-full px-2 py-1 text-sm text-right border-0 focus:bg-blue-50 font-mono" placeholder="0" oninput="calculateRow(this.closest('tr'))">
+        </td>
+
+        <td class="border border-slate-300 p-1">
+          <input type="number" step="any" min="0" class="cell-total w-full px-2 py-1 text-sm text-right border-0 focus:bg-blue-50 font-mono" placeholder="0.00" oninput="calculateRow(this.closest('tr'))">
+        </td>
+
+        <td class="border border-slate-300 p-1 bg-slate-100">
+          <input type="text" class="cell-rate w-full px-2 py-1 text-sm text-right border-0 bg-transparent font-mono font-bold text-slate-700" readonly placeholder="0.00">
+        </td>
+
+        <td class="border border-slate-300 p-1">
+          <input type="text" class="cell-req w-full px-2 py-1 text-sm border-0 focus:bg-blue-50" placeholder="প্রজেক্ট / সাইট নাম">
+        </td>
+
+        <td class="border border-slate-300 p-1">
+          <input type="text" class="cell-physical w-full px-2 py-1 text-sm border-0 focus:bg-blue-50" placeholder="আইডেন্টিটি টেক্সট">
+        </td>
+
+        <td class="border border-slate-300 p-1">
+          <input type="text" class="cell-remarks w-full px-2 py-1 text-sm border-0 focus:bg-blue-50" placeholder="মন্তব্য">
+        </td>
+
+        <td class="border border-slate-300 p-1 text-center">
+          <button type="button" onclick="removeRow(this)" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600">✕</button>
+        </td>
+      `;
+
+      body.appendChild(tr);
+      updateRowNumbers();
+      return tr;
+    }
+
+    function removeRow(btn) {
+      const body = document.getElementById('tableBody');
+      if (body.querySelectorAll('tr').length > 1) {
+        btn.closest('tr').remove();
+        updateRowNumbers();
+        calculateGrandTotal();
+      }
+    }
+
+    function updateRowNumbers() {
+      document.querySelectorAll('#tableBody tr').forEach((tr, i) => {
+        tr.querySelector('.sl-no').innerText = i + 1;
+      });
+    }
+
+    function calculateRow(tr) {
+      const qtyVal = tr.querySelector('.cell-qty').value.trim();
+      const totalVal = tr.querySelector('.cell-total').value.trim();
+      const rateInput = tr.querySelector('.cell-rate');
+
+      const qty = parseFloat(qtyVal) || 0;
+      const total = parseFloat(totalVal) || 0;
+
+      if (qty > 0 && total >= 0 && qtyVal !== '' && totalVal !== '') {
+        const rate = total / qty;
+        rateInput.value = rate.toFixed(2);
+      } else {
+        rateInput.value = '0.00';
+      }
+      calculateGrandTotal();
+    }
+
+    function calculateGrandTotal() {
+      let gQty = 0;
+      let gTotal = 0;
+
+      document.querySelectorAll('#tableBody tr').forEach(tr => {
+        gQty += parseFloat(tr.querySelector('.cell-qty').value) || 0;
+        gTotal += parseFloat(tr.querySelector('.cell-total').value) || 0;
+      });
+
+      document.getElementById('grandQty').innerText = gQty.toFixed(2);
+      document.getElementById('grandTotal').innerText = gTotal.toFixed(2);
+    }
+
+    async function generate5DigitLMR() {
+      let nextNum = 1;
+      if (firebaseDb) {
+        try {
+          const snap = await firebaseDb.ref('material_purchase').limitToLast(1).once('value');
+          if (snap.exists()) {
+            const data = snap.val();
+            const lastKey = Object.keys(data)[0];
+            const lastLmr = data[lastKey].lmrNo || '';
+            const match = lastLmr.match(/\d+/);
+            if (match) {
+              nextNum = parseInt(match[0], 10) + 1;
+            }
+          }
+        } catch(e) {
+          console.warn("LMR Fetch error, fallback sequence used", e);
+        }
+      } else {
+        const localLast = localStorage.getItem('last_lmr_seq') || 0;
+        nextNum = parseInt(localLast, 10) + 1;
+        localStorage.setItem('last_lmr_seq', nextNum);
+      }
+      return 'LMR-' + String(nextNum).padStart(5, '0');
+    }
+
+    let isSubmittingLocked = false;
+    const submissionQueue = [];
+
+    function processSubmissionQueue() {
+      if (isSubmittingLocked || submissionQueue.length === 0) return;
+      isSubmittingLocked = true;
+      const nextTask = submissionQueue.shift();
+      nextTask();
+    }
+
+    async function executeSubmissionTask(formData, items, btn, originalBtnText) {
+      try {
+        if (firebaseDb) {
+          const lmrNo = await generate5DigitLMR();
+          formData.lmrNo = lmrNo;
+
+          await firebaseDb.ref('material_purchase').push(formData);
+
+          for (const item of items) {
+            const safeKey = `${item.materialName}_${item.unit}`.replace(/[.#$/[\]]/g, "_");
+            const stockRef = firebaseDb.ref(`stock_summary/${safeKey}`);
+
+            await stockRef.transaction((currentData) => {
+              if (currentData === null) {
+                return {
+                  name: item.materialName,
+                  unit: item.unit,
+                  stock: item.quantity
+                };
+              } else {
+                return {
+                  ...currentData,
+                  stock: (parseFloat(currentData.stock) || 0) + item.quantity
+                };
+              }
+            });
+          }
+
+          document.getElementById('modalLmrNo').innerText = lmrNo;
+          document.getElementById('lmrModal').classList.remove('hidden');
+        }
+      } catch (err) {
+        alert("ত্রুটি: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalBtnText;
+        isSubmittingLocked = false;
+        processSubmissionQueue();
+      }
+    }
+
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+
+      const rows = document.querySelectorAll('#tableBody tr');
+      let validItemsCount = 0;
+      let hasValidationError = false;
+      let errorMessage = "";
+
+      const items = [];
+      rows.forEach((tr, index) => {
+        const name = tr.querySelector('.cell-name') ? tr.querySelector('.cell-name').value.trim() : '';
+        const unit = tr.querySelector('.cell-unit') ? tr.querySelector('.cell-unit').value.trim() : '';
+        const qtyVal = tr.querySelector('.cell-qty') ? tr.querySelector('.cell-qty').value.trim() : '';
+        const reqFor = tr.querySelector('.cell-req') ? tr.querySelector('.cell-req').value.trim() : '';
+
+        if (name !== '' || unit !== '' || qtyVal !== '' || reqFor !== '') {
+          if (!name || !unit || qtyVal === '' || parseFloat(qtyVal) <= 0 || !reqFor) {
+            hasValidationError = true;
+            errorMessage = `রো #${index + 1}: ম্যাটেরিয়াল নাম, ইউনিট, কোয়ান্টিটি এবং রিকোয়েস্ট ফর ফিল্ডগুলো অবশ্যই পূরণ করতে হবে!`;
+          } else {
+            validItemsCount++;
+            items.push({
+              materialName: name,
+              unit: unit,
+              quantity: parseFloat(qtyVal),
+              totalAmount: tr.querySelector('.cell-total').value !== '' ? parseFloat(tr.querySelector('.cell-total').value) : 0,
+              rate: parseFloat(tr.querySelector('.cell-rate').value) || 0,
+              requestFor: reqFor,
+              physicalIdentity: tr.querySelector('.cell-physical') ? tr.querySelector('.cell-physical').value.trim() : '',
+              remarks: tr.querySelector('.cell-remarks') ? tr.querySelector('.cell-remarks').value.trim() : ''
+            });
+          }
+        }
+      });
+
+      if (hasValidationError) {
+        showAlertModal(errorMessage);
+        return;
+      }
+
+      if (validItemsCount === 0) {
+        showAlertModal("অনুগ্রহ করে ম্যাটেরিয়াল টেবিলে অন্তত একটি আইটেমের সঠিক তথ্য পূরণ করুন।");
+        return;
+      }
+
+      const btn = document.getElementById('submitBtn');
+      const originalBtnText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `ওয়েটিং লিস্টে আছে...`;
+
+      const formData = {
+        currentDate: document.getElementById('currentDate').value,
+        requisitionNo: document.getElementById('reqNo').value.trim(),
+        supplierName: document.getElementById('supplierName').value.trim(),
+        supplierNumber: document.getElementById('supplierNum').value.trim(),
+        challanDate: document.getElementById('challanDate').value,
+        erpMrr: document.getElementById('erpMrr').value.trim(),
+        headerRemarks: document.getElementById('headerRemarks').value.trim(),
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        items: items
+      };
+
+      submissionQueue.push(() => {
+        executeSubmissionTask(formData, items, btn, originalBtnText);
+      });
+
+      processSubmissionQueue();
+    }
+
+    function closeLmrModal() {
+      document.getElementById('lmrModal').classList.add('hidden');
+      document.getElementById('purchaseForm').reset();
+      document.getElementById('currentDate').valueAsDate = new Date();
+      document.getElementById('tableBody').innerHTML = '';
+      addNewRow();
+      calculateGrandTotal();
+    }
+  </script>
+</body>
+</html>

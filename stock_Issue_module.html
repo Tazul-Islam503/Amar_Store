@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Issue Module</title>
+    <!-- SheetJS CDN for Excel Upload -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <!-- Firebase App, Database & Analytics SDK (Compat Version) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+            overflow: visible !important;
+        }
+        h2 { color: #333; text-align: center; margin-bottom: 20px; }
+        
+        .header-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            width:50%;
+        }
+        .header-group {
+            position: relative;
+        }
+        .header-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .header-group input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            background: #fff;
+        }
+        .header-group input:focus { border-color: #007bff; outline: none; background-color: #eef5ff; }
+
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .excel-upload-btn { background-color: #17a2b8; padding: 6px 12px; font-size: 13px; }
+        .excel-upload-btn:hover { background-color: #138496; }
+        .save-btn { background-color: #28a745; }
+        .save-btn:hover { background-color: #218838; }
+        .save-btn:disabled { background-color: #6c757d; cursor: not-allowed; }
+
+        /* ফর্ম ফুটার বা সাবমিট ও এক্সেল বাটন সেকশন */
+        .form-footer-section {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            padding: 8px 5px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow: visible !important;
+            margin-bottom: 20px;
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            min-width: 950px;
+        }
+        th, td { 
+            border: 1px solid #ddd; 
+            padding: 8px; 
+            text-align: center; 
+            position: relative; 
+            overflow: visible !important;
+        }
+        th { background-color: #007bff; color: white; font-size: 14px; }
+        
+        .col-sl { width: 4%; }
+        .col-item { width: 26%; }
+        .col-qty { width: 9%; }
+        .col-unit { width: 9%; }
+        .col-eqp { width: 18%; }
+        .col-hr { width: 9%; }
+        .col-erp { width: 9%; }
+        .col-rem { width: 11%; }
+        .col-act { width: 5%; }
+
+        input {
+            width: 100%;
+            padding: 6px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        input:focus { border-color: #007bff; outline: none; background-color: #eef5ff; }
+        input.readonly-input { background-color: #e9ecef; cursor: not-allowed; font-weight: bold; }
+        input.invalid { border-color: #dc3545; background-color: #fff8f8; }
+        
+        .suggestions-box {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 100%; 
+            background: #fff;
+            border: 1px solid #007bff;
+            border-top: none;
+            max-height: 300px; 
+            overflow-y: auto;
+            z-index: 999999;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            text-align: left;
+        }
+        .suggestions-box li {
+            padding: 10px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .suggestions-box li.active, .suggestions-box li:hover {
+            background-color: #007bff;
+            color: white;
+        }
+        .stock-tag {
+            font-size: 11px;
+            background: #28a745;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+        .suggestions-box li.active .stock-tag {
+            background: #fff;
+            color: #007bff;
+        }
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .delete-btn:hover { background-color: #c82333; }
+
+        /* কাস্টম সেন্টার পপআপ এবং ব্লার ব্যাকগ্রাউন্ড স্টাইল */
+        #customPopupOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999999;
+        }
+        .custom-popup-box {
+            background: #fff;
+            padding: 25px 30px;
+            border-radius: 8px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            animation: popupScale 0.2s ease-in-out;
+        }
+        @keyframes popupScale {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .custom-popup-box h3 { margin-top: 0; color: #28a745; font-size: 20px; }
+        .custom-popup-box p { font-size: 14px; color: #555; margin: 15px 0 20px 0; white-space: pre-line; }
+        .custom-popup-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .custom-popup-btn:hover { background-color: #0056b3; }
+       #back{right:0; font-weight:bold; font-size:35px; color:red;}
+    </style>
+</head>
+<body>
+
+<!-- কাস্টম সেন্টার পপআপ মডাল -->
+<div id="customPopupOverlay">
+    <div class="custom-popup-box">
+        <h3 id="popupTitle">সফল!</h3>
+        <p id="popupMessage">মেসেজ এখানে আসবে...</p>
+        <button class="custom-popup-btn" onclick="closeCustomPopup()">OK</button>
+    </div>
+</div>
+
+<div class="container" id="mainContainer">
+    <h2>Stock_Issue</h2>
+<!---Back to home---->
+ <a href="index.html" class="flex items-center gap-3 px-4 py-2.5 rounded bg-blue-600 text-white font-medium" id="back">
+                <i class="fa-solid fa-chart-pie w-5"></i> Back</a>
+    <!-- মূল হেডার ইনফরমেশন -->
+    <div class="header-section" id="headerSection">
+        <div class="header-group">
+            <label for="entryDate">Date:</label>
+            <input type="date" id="entryDate" class="header-input">
+        </div></br>
+        <div class="header-group">
+            <label for="entryIndent">Indent:</label>
+            <input type="text" id="entryIndent" class="header-input" placeholder="Indent No...">
+        </div></br>
+        <div class="header-group" style="position: relative;">
+            <label for="entryReceiver">গ্রহীতা (Receiver):</label>
+            <input type="text" id="entryReceiver" class="header-input" placeholder="Receiver Name..." autocomplete="off">
+            <ul class="suggestions-box" id="receiverSuggestions"></ul>
+        </div>
+    </div>
+
+    <!-- ফর্ম ফুটার বা সাবমিট ও এক্সেল বাটন সেকশন (একই লাইনে ডানে বিন্যস্ত) -->
+    <div class="form-footer-section">
+        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
+        <button class="btn excel-upload-btn" onclick="document.getElementById('excelFileInput').click()">
+            📂 Excel Load
+        </button>
+        <button class="btn save-btn" id="saveBtn" style="padding: 10px 22px; font-size: 15px;">Submit</button>
+    </div>
+
+    <div class="table-responsive">
+        <table id="inventoryTable">
+            <thead>
+                <tr>
+                    <th class="col-sl">Sl</th>
+                    <th class="col-item">Item</th>
+                    <th class="col-qty">Quanty</th>
+                    <th class="col-unit">Unit</th>
+                    <th class="col-eqp">Equipment</th>
+                    <th class="col-hr">Hr meter</th>
+                    <th class="col-erp">ERP Issue</th>
+                    <th class="col-rem">Remarks</th>
+                    <th class="col-act">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- ডাইনামিক রো -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCQV_4nv_ohzevtZRxLj3Aq4kVafVEiLKw",
+        authDomain: "tazul503.firebaseapp.com",
+        databaseURL: "https://tazul503-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "tazul503",
+        storageBucket: "tazul503.firebasestorage.app",
+        messagingSenderId: "190926921011",
+        appId: "1:190926921011:web:77822854066e6a840f3246",
+        measurementId: "G-GNHSXE22TQ"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const analytics = firebase.analytics();
+
+    let productDatabase = [];
+
+    const receiverDatabase = [
+        "Md. Rahim Uddin",
+        "Engr. Tanvir Ahmed",
+        "Kamal Hossain",
+        "Sohanur Rahman",
+        "General Workshop Supervisor"
+    ];
+
+    const equipmentDatabase = [
+        { code: "BP-888", name: "BP-888 Vehicle" },
+        { code: "EX-802", name: "SDLG-LG6210E-Dalian Deutz" },
+        { code: "DT-054", name: "HINO-FS4FKC-HINO-F21C" },
+        { code: "Workshop", name: "General Workshop" }
+    ];
+
+    const tbody = document.querySelector('#inventoryTable tbody');
+    document.getElementById('entryDate').valueAsDate = new Date();
+
+    function showCustomPopup(title, message, isSuccess = true) {
+        document.getElementById('popupTitle').textContent = title;
+        document.getElementById('popupTitle').style.color = isSuccess ? '#28a745' : '#dc3545';
+        document.getElementById('popupMessage').textContent = message;
+        document.getElementById('customPopupOverlay').style.display = 'flex';
+    }
+
+    function closeCustomPopup() {
+        document.getElementById('customPopupOverlay').style.display = 'none';
+    }
+
+    function formatStockValue(val) {
+        let num = parseFloat(val);
+        if (isNaN(num)) return "0";
+        return Number.isInteger(num) ? num.toString() : num.toFixed(2);
+    }
+
+    function fetchAvailableStock() {
+        db.ref('stock_summary').once('value')
+            .then((snapshot) => {
+                const data = snapshot.val();
+                productDatabase = [];
+                if (data) {
+                    Object.entries(data).forEach(([key, item]) => {
+                        const stockVal = parseFloat(item.stock) || 0;
+                        if (item.name && stockVal > 0) {
+                            productDatabase.push({
+                                firebaseKey: key,
+                                name: item.name.toString().trim(),
+                                unit: item.unit ? item.unit.toString().trim() : "Pcs",
+                                stock: stockVal
+                            });
+                        }
+                    });
+                }
+            })
+            .catch((error) => {
+                console.error("স্টক লোড করতে সমস্যা হয়েছে:", error);
+            });
+    }
+
+    window.addEventListener('DOMContentLoaded', fetchAvailableStock);
+
+    const headerInputs = Array.from(document.querySelectorAll('.header-input'));
+    const receiverInput = document.getElementById('entryReceiver');
+    const receiverSuggestions = document.getElementById('receiverSuggestions');
+
+    headerInputs.forEach((inp, idx) => {
+        inp.addEventListener('keydown', function(e) {
+            const hasSuggestions = receiverSuggestions.children.length > 0;
+
+            if (hasSuggestions && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+                const items = Array.from(receiverSuggestions.querySelectorAll('li'));
+                let activeIndex = items.findIndex(item => item.classList.contains('active'));
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (activeIndex >= 0) items[activeIndex].classList.remove('active');
+                    activeIndex = (activeIndex + 1) % items.length;
+                    items[activeIndex].classList.add('active');
+                    items[activeIndex].scrollIntoView({ block: 'nearest' });
+                    return;
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (activeIndex >= 0) items[activeIndex].classList.remove('active');
+                    activeIndex = (activeIndex - 1 + items.length) % items.length;
+                    items[activeIndex].classList.add('active');
+                    items[activeIndex].scrollIntoView({ block: 'nearest' });
+                    return;
+                }
+            }
+
+            if (hasSuggestions && e.key === 'Enter') {
+                const activeItem = receiverSuggestions.querySelector('li.active');
+                if (activeItem) {
+                    e.preventDefault();
+                    receiverInput.value = activeItem.textContent;
+                    receiverSuggestions.innerHTML = '';
+                    const firstRowInput = tbody.querySelector('.item-input');
+                    if (firstRowInput) firstRowInput.focus();
+                    return;
+                }
+            }
+
+            if (e.key === 'ArrowRight' || e.key === 'Enter') {
+                e.preventDefault();
+                if (idx < headerInputs.length - 1) {
+                    headerInputs[idx + 1].focus();
+                    headerInputs[idx + 1].select();
+                } else {
+                    const firstRowInput = tbody.querySelector('.item-input');
+                    if (firstRowInput) firstRowInput.focus();
+                }
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                if (idx > 0) {
+                    headerInputs[idx - 1].focus();
+                    headerInputs[idx - 1].select();
+                }
+            }
+        });
+    });
+
+    receiverInput.addEventListener('input', function() {
+        const query = this.value.trim().toLowerCase();
+        receiverSuggestions.innerHTML = '';
+        if (!query) return;
+
+        const matches = receiverDatabase.filter(r => r.toLowerCase().includes(query));
+        matches.forEach((name, idx) => {
+            const li = document.createElement('li');
+            li.textContent = name;
+            if (idx === 0) li.classList.add('active');
+            li.onmousedown = (ev) => {
+                ev.preventDefault();
+                receiverInput.value = name;
+                receiverSuggestions.innerHTML = '';
+            };
+            receiverSuggestions.appendChild(li);
+        });
+    });
+
+    receiverInput.addEventListener('focus', function() {
+        const query = this.value.trim().toLowerCase();
+        receiverSuggestions.innerHTML = '';
+        const matches = receiverDatabase.filter(r => r.toLowerCase().includes(query));
+        matches.forEach((name, idx) => {
+            const li = document.createElement('li');
+            li.textContent = name;
+            if (idx === 0) li.classList.add('active');
+            li.onmousedown = (ev) => {
+                ev.preventDefault();
+                receiverInput.value = name;
+                receiverSuggestions.innerHTML = '';
+            };
+            receiverSuggestions.appendChild(li);
+        });
+    });
+
+    function updateSerialNumbers() {
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach((row, index) => {
+            row.querySelector('.sl-no').textContent = index + 1;
+        });
+    }
+
+    function addNewRow(initialData = {}) {
+        let defaultUnit = initialData.unit || "";
+        let defaultEqp = initialData.equipment || "";
+        let defaultHr = initialData.hr || "";
+        let defaultErp = initialData.erp || "";
+
+        const rows = tbody.querySelectorAll('tr');
+        if (!initialData.unit && rows.length > 0) {
+            const lastRow = rows[rows.length - 1];
+            defaultEqp = lastRow.querySelector('.eqp-input').value;
+            defaultHr = lastRow.querySelector('.hr-input').value;
+            defaultErp = lastRow.querySelector('.erp-input').value; // অটো কপি ফিচার
+        }
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td class="sl-no"></td>
+            <td style="position: relative;">
+                <input type="text" class="item-input" placeholder="Search item..." autocomplete="off" value="${initialData.item || ''}">
+                <ul class="suggestions-box item-suggestions"></ul>
+            </td>
+            <td><input type="number" step="any" class="qty-input" placeholder="0" value="${initialData.qty || ''}"></td>
+            <td>
+                <input type="text" class="unit-input readonly-input" placeholder="Unit" readonly tabindex="-1" value="${defaultUnit}">
+            </td>
+            <td style="position: relative;">
+                <input type="text" class="eqp-input" placeholder="Equipment..." autocomplete="off" value="${defaultEqp}">
+                <ul class="suggestions-box eqp-suggestions"></ul>
+            </td>
+            <td><input type="text" class="hr-input" placeholder="Hr meter..." value="${defaultHr}"></td>
+            <td><input type="text" class="erp-input" placeholder="ERP Issue..." value="${defaultErp}"></td>
+            <td><input type="text" class="rem-input" placeholder="Remarks..." value="${initialData.remarks || ''}"></td>
+            <td><button type="button" class="delete-btn">Delete</button></td>
+        `;
+        tbody.appendChild(tr);
+        updateSerialNumbers();
+        return tr;
+    }
+
+    addNewRow();
+
+    tbody.addEventListener('input', function(e) {
+        const target = e.target;
+        target.classList.remove('invalid');
+        const query = target.value.trim().toLowerCase();
+        const cell = target.closest('td');
+        const suggestionsBox = cell ? cell.querySelector('.suggestions-box') : null;
+
+        if (!suggestionsBox) return;
+        suggestionsBox.innerHTML = '';
+        if (!query) return;
+
+        if (target.classList.contains('item-input')) {
+            const matches = productDatabase.filter(p => p.name.toLowerCase().includes(query));
+            matches.forEach((item, idx) => {
+                const li = document.createElement('li');
+                const displayStock = formatStockValue(item.stock);
+                
+                li.innerHTML = `<span>${item.name} <b>[${item.unit}]</b></span> <span class="stock-tag">Stock: ${displayStock} ${item.unit}</span>`;
+                if (idx === 0) li.classList.add('active');
+                
+                li.onmousedown = (ev) => {
+                    ev.preventDefault();
+                    target.value = item.name;
+                    const row = target.closest('tr');
+                    row.querySelector('.unit-input').value = item.unit;
+                    row.querySelector('.qty-input').setAttribute('max', item.stock);
+                    suggestionsBox.innerHTML = '';
+                };
+                suggestionsBox.appendChild(li);
+            });
+        } else if (target.classList.contains('eqp-input')) {
+            const matches = equipmentDatabase.filter(eq => eq.code.toLowerCase().includes(query) || eq.name.toLowerCase().includes(query));
+            matches.forEach((eq, idx) => {
+                const li = document.createElement('li');
+                li.textContent = `${eq.code} (${eq.name})`;
+                if (idx === 0) li.classList.add('active');
+                li.onmousedown = (ev) => {
+                    ev.preventDefault();
+                    target.value = `${eq.code} (${eq.name})`;
+                    suggestionsBox.innerHTML = '';
+                };
+                suggestionsBox.appendChild(li);
+            });
+        }
+    });
+
+    // 🟢 ফোকাস আউট হলে ভুল বা অবাঞ্ছিত লেটারযুক্ত ইনপুট স্বয়ংক্রিয়ভাবে খালি করার ভ্যালিডেশন
+    tbody.addEventListener('focusout', function(e) {
+        const target = e.target;
+        setTimeout(() => {
+            if (target.classList.contains('item-input')) {
+                const enteredVal = target.value.trim();
+                const row = target.closest('tr');
+                const unitVal = row.querySelector('.unit-input').value.trim();
+                
+                if (enteredVal !== "") {
+                    const isValid = productDatabase.some(p => p.name.toLowerCase() === enteredVal.toLowerCase() && p.unit.toLowerCase() === unitVal.toLowerCase());
+                    if (!isValid) {
+                        target.value = "";
+                        row.querySelector('.unit-input').value = "";
+                        row.querySelector('.qty-input').removeAttribute('max');
+                    }
+                } else {
+                    row.querySelector('.unit-input').value = "";
+                    row.querySelector('.qty-input').removeAttribute('max');
+                }
+            } else if (target.classList.contains('eqp-input')) {
+                const enteredVal = target.value.trim();
+                if (enteredVal !== "") {
+                    const isValidEqp = equipmentDatabase.some(eq => `${eq.code} (${eq.name})`.toLowerCase() === enteredVal.toLowerCase() || eq.code.toLowerCase() === enteredVal.toLowerCase());
+                    if (!isValidEqp) {
+                        target.value = "";
+                    }
+                }
+            }
+        }, 200);
+    });
+
+    tbody.addEventListener('keydown', function(e) {
+        const currentInput = e.target;
+        if (currentInput.tagName !== 'INPUT') return;
+
+        const cell = currentInput.closest('td');
+        const currentRow = currentInput.closest('tr');
+        const allRows = Array.from(tbody.querySelectorAll('tr'));
+        const rowIndex = allRows.indexOf(currentRow);
+        const rowInputs = Array.from(currentRow.querySelectorAll('input'));
+        const colIndex = rowInputs.indexOf(currentInput);
+        
+        const suggestionsBox = cell ? cell.querySelector('.suggestions-box') : null;
+        const hasSuggestions = suggestionsBox && suggestionsBox.children.length > 0;
+
+        if (hasSuggestions && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+            const items = Array.from(suggestionsBox.querySelectorAll('li'));
+            let activeIndex = items.findIndex(item => item.classList.contains('active'));
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (activeIndex >= 0) items[activeIndex].classList.remove('active');
+                activeIndex = (activeIndex + 1) % items.length;
+                items[activeIndex].classList.add('active');
+                items[activeIndex].scrollIntoView({ block: 'nearest' });
+                return;
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (activeIndex >= 0) items[activeIndex].classList.remove('active');
+                activeIndex = (activeIndex - 1 + items.length) % items.length;
+                items[activeIndex].classList.add('active');
+                items[activeIndex].scrollIntoView({ block: 'nearest' });
+                return;
+            }
+        }
+
+        if (hasSuggestions && e.key === 'Enter') {
+            const activeItem = suggestionsBox.querySelector('li.active');
+            if (activeItem) {
+                e.preventDefault();
+                const fullText = activeItem.querySelector('span') ? activeItem.querySelector('span').textContent : activeItem.textContent;
+                
+                if (currentInput.classList.contains('item-input')) {
+                    const matchParts = fullText.match(/^(.*?)\s*\[(.*?)\]$/);
+                    if (matchParts) {
+                        const itemName = matchParts[1].trim();
+                        const itemUnit = matchParts[2].trim();
+                        currentInput.value = itemName;
+                        currentRow.querySelector('.unit-input').value = itemUnit;
+
+                        const foundItem = productDatabase.find(p => p.name.toLowerCase() === itemName.toLowerCase() && p.unit.toLowerCase() === itemUnit.toLowerCase());
+                        if (foundItem) {
+                            currentRow.querySelector('.qty-input').setAttribute('max', foundItem.stock);
+                        }
+                    }
+                } else if (currentInput.classList.contains('eqp-input')) {
+                    currentInput.value = fullText;
+                }
+                
+                suggestionsBox.innerHTML = '';
+                focusNextInput(currentInput);
+                return;
+            }
+        }
+
+        if (!hasSuggestions && e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (rowIndex < allRows.length - 1) {
+                const targetInput = allRows[rowIndex + 1].querySelectorAll('input')[colIndex];
+                if (targetInput) { targetInput.focus(); targetInput.select(); }
+            }
+            return;
+        }
+
+        if (!hasSuggestions && e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (rowIndex > 0) {
+                const targetInput = allRows[rowIndex - 1].querySelectorAll('input')[colIndex];
+                if (targetInput) { targetInput.focus(); targetInput.select(); }
+            }
+            return;
+        }
+
+        if (e.key === 'ArrowRight') {
+            if (colIndex < rowInputs.length - 1) {
+                e.preventDefault();
+                let nextInp = rowInputs[colIndex + 1];
+                if (nextInp.classList.contains('readonly-input')) {
+                    nextInp = rowInputs[colIndex + 2];
+                }
+                if(nextInp) { nextInp.focus(); nextInp.select(); }
+            }
+            return;
+        }
+
+        if (e.key === 'ArrowLeft') {
+            if (colIndex > 0) {
+                e.preventDefault();
+                let prevInp = rowInputs[colIndex - 1];
+                if (prevInp.classList.contains('readonly-input')) {
+                    prevInp = rowInputs[colIndex - 2];
+                }
+                if(prevInp) { prevInp.focus(); prevInp.select(); }
+            } else if (rowIndex === 0) {
+                document.getElementById('entryReceiver').focus();
+            }
+            return;
+        }
+
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            focusNextInput(currentInput);
+        }
+    });
+
+    function focusNextInput(currentInput) {
+        const currentRow = currentInput.closest('tr');
+        const inputs = Array.from(currentRow.querySelectorAll('input'));
+        const currentIndex = inputs.indexOf(currentInput);
+
+        const itemVal = currentRow.querySelector('.item-input').value.trim();
+        const qtyVal = currentRow.querySelector('.qty-input').value.trim();
+        const unitVal = currentRow.querySelector('.unit-input').value.trim();
+        const eqpVal = currentRow.querySelector('.eqp-input').value.trim();
+        const hrVal = currentRow.querySelector('.hr-input').value.trim();
+
+        if (currentInput.classList.contains('qty-input')) {
+            if (itemVal && qtyVal && unitVal && eqpVal && hrVal) {
+                const nextRow = addNewRow();
+                nextRow.querySelector('.item-input').focus();
+                return;
+            }
+        }
+
+        if (currentIndex === inputs.length - 1) {
+            if (!itemVal || !qtyVal || !unitVal || !eqpVal || !hrVal) {
+                showCustomPopup("সতর্কতা", "দয়া করে Item, Quanty, Unit, Equipment এবং Hr meter পূরণ করুন!", false);
+                if (!itemVal) currentRow.querySelector('.item-input').classList.add('invalid');
+                if (!qtyVal) currentRow.querySelector('.qty-input').classList.add('invalid');
+                if (!eqpVal) currentRow.querySelector('.eqp-input').classList.add('invalid');
+                if (!hrVal) currentRow.querySelector('.hr-input').classList.add('invalid');
+                return;
+            }
+
+            const nextRow = addNewRow();
+            nextRow.querySelector('.item-input').focus();
+        } else {
+            let nextIndex = currentIndex + 1;
+            if (inputs[nextIndex] && inputs[nextIndex].classList.contains('readonly-input')) {
+                nextIndex++;
+            }
+            if (inputs[nextIndex]) {
+                inputs[nextIndex].focus();
+                inputs[nextIndex].select();
+            }
+        }
+    }
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('td') && !e.target.closest('.header-group')) {
+            document.querySelectorAll('.suggestions-box').forEach(box => box.innerHTML = '');
+        }
+    });
+
+    tbody.addEventListener('click', function(e) {
+        if (e.target.classList.contains('delete-btn')) {
+            const row = e.target.closest('tr');
+            if (tbody.querySelectorAll('tr').length > 1) {
+                row.remove();
+                updateSerialNumbers();
+            } else {
+                showCustomPopup("সতর্কতা", "কমপক্ষে একটি রো থাকা আবশ্যক!", false);
+            }
+        }
+    });
+
+    document.getElementById('excelFileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            try {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                if (sheetData.length === 0) {
+                    showCustomPopup("সতর্কতা", "ফাইলে কোনো ডাটা পাওয়া যায়নি!", false);
+                    return;
+                }
+
+                const fileHeaders = sheetData[0];
+                const requiredHeaders = ["Item", "Quanty", "Unit", "Equipment", "Hr meter", "Remarks"];
+                const missingHeaders = requiredHeaders.filter(h => !fileHeaders.includes(h));
+
+                if (missingHeaders.length > 0) {
+                    showCustomPopup("সতর্কতা", `কলাম হেডার ১০০% মেলেনি!\nঅনুপস্থিত: ${missingHeaders.join(', ')}`, false);
+                    e.target.value = '';
+                    return;
+                }
+
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                const existingRows = tbody.querySelectorAll('tr');
+                if (existingRows.length === 1 && !existingRows[0].querySelector('.item-input').value) {
+                    existingRows[0].remove();
+                }
+
+                jsonData.forEach(row => {
+                    addNewRow({
+                        item: row['Item'] || '',
+                        qty: row['Quanty'] || '',
+                        unit: row['Unit'] || '',
+                        equipment: row['Equipment'] || '',
+                        hr: row['Hr meter'] || '',
+                        erp: row['ERP Issue'] || '',
+                        remarks: row['Remarks'] || ''
+                    });
+                });
+
+                showCustomPopup("সফল", `সফলভাবে ${jsonData.length} টি আইটেম এক্সেল থেকে লোড করা হয়েছে!`, true);
+                e.target.value = '';
+            } catch (err) {
+                showCustomPopup("ত্রুটি", "Excel ফাইল লোড করতে সমস্যা হয়েছে।", false);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    function saveToFirebase() {
+        if (!navigator.onLine) {
+            showCustomPopup("সংযোগ বিচ্ছিন্ন", "⚠️ আপনার ইন্টারনেট কানেকশন নেই! ইন্টারনেট অন করে আবার সেভ করুন।", false);
+            return;
+        }
+
+        const dateVal = document.getElementById('entryDate').value;
+        const indentVal = document.getElementById('entryIndent').value.trim();
+        const receiverVal = document.getElementById('entryReceiver').value.trim();
+
+        if (!dateVal || !indentVal || !receiverVal) {
+            showCustomPopup("সতর্কতা", "⚠️ দয়া করে হেডার অংশের Date, Indent এবং Receiver ফিল্ডগুলো পূরণ করুন!", false);
+            return;
+        }
+
+        const rows = tbody.querySelectorAll('tr');
+        let isValid = true;
+        let errorMessage = "";
+
+        document.querySelectorAll('input').forEach(inp => inp.classList.remove('invalid'));
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const rowNum = i + 1;
+            const itemInput = row.querySelector('.item-input');
+            const qtyInput = row.querySelector('.qty-input');
+            const unitInput = row.querySelector('.unit-input');
+            const eqpInput = row.querySelector('.eqp-input');
+            const hrInput = row.querySelector('.hr-input');
+
+            const itemName = itemInput.value.trim();
+            const unitName = unitInput.value.trim();
+            const eqpName = eqpInput.value.trim();
+            const qtyVal = parseFloat(qtyInput.value.trim());
+
+            if (!itemName || isNaN(qtyVal) || !unitName || !eqpName || !hrInput.value.trim()) {
+                isValid = false;
+                errorMessage = `রো নম্বর ${rowNum}-এর প্রয়োজনীয় ঘরগুলো খালি রয়েছে বা কোয়ান্টিটি সঠিক নয়!`;
+                if (!itemName) itemInput.classList.add('invalid');
+                if (isNaN(qtyVal)) qtyInput.classList.add('invalid');
+                if (!unitName) unitInput.classList.add('invalid');
+                if (!eqpName) eqpInput.classList.add('invalid');
+                if (!hrInput.value.trim()) hrInput.classList.add('invalid');
+                break;
+            }
+
+            const matchedProduct = productDatabase.find(p => p.name.toLowerCase() === itemName.toLowerCase() && p.unit.toLowerCase() === unitName.toLowerCase());
+            
+            if (matchedProduct) {
+                if (qtyVal > matchedProduct.stock) {
+                    isValid = false;
+                    errorMessage = `⚠️ রো নম্বর ${rowNum}: "${itemName} [${unitName}]" আইটেমের স্টক অপর্যাপ্ত!\nবর্তমান স্টক: ${matchedProduct.stock} ${unitName}, আপনি এন্ট্রি করেছেন: ${qtyVal}`;
+                    qtyInput.classList.add('invalid');
+                    break;
+                }
+            } else {
+                isValid = false;
+                errorMessage = `⚠️ রো নম্বর ${rowNum}: "${itemName}" (${unitName}) আইটেমটি স্টক ডাটাবেজে সঠিক ইউনিটসহ পাওয়া যায়নি!`;
+                itemInput.classList.add('invalid');
+                break;
+            }
+        }
+
+        if (!isValid) {
+            showCustomPopup("সতর্কতা", errorMessage, false);
+            return;
+        }
+
+        const saveBtn = document.getElementById('saveBtn');
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = "⏳ সেভ ও স্টক আপডেট হচ্ছে...";
+        document.getElementById('mainContainer').style.pointerEvents = 'none';
+
+        db.ref('consumption_entries').once('value').then((snapshot) => {
+            let nextCounter = 1;
+            if (snapshot.exists()) {
+                nextCounter = snapshot.numChildren() + 1;
+            }
+            const postingId = "ISU-" + String(nextCounter).padStart(6, '0');
+
+            const postingRef = db.ref('consumption_entries').push();
+            const entriesData = [];
+            const stockUpdates = {};
+
+            rows.forEach((row, index) => {
+                const itemName = row.querySelector('.item-input').value.trim();
+                const qty = parseFloat(row.querySelector('.qty-input').value.trim()) || 0;
+                const unit = row.querySelector('.unit-input').value.trim();
+                const equipment = row.querySelector('.eqp-input').value.trim();
+                const hr = row.querySelector('.hr-input').value.trim();
+                const erp = row.querySelector('.erp-input').value.trim(); // ERP Issue ডেটা সংগ্রহ
+                const remarks = row.querySelector('.rem-input').value.trim();
+
+                entriesData.push({ sl: index + 1, item: itemName, qty: qty, unit: unit, equipment: equipment, hr: hr, erp: erp, remarks: remarks });
+
+                const matchedProduct = productDatabase.find(p => p.name.toLowerCase() === itemName.toLowerCase() && p.unit.toLowerCase() === unit.toLowerCase());
+                if (matchedProduct) {
+                    const newStock = Math.max(0, matchedProduct.stock - qty);
+                    matchedProduct.stock = newStock;
+                    stockUpdates[`stock_summary/${matchedProduct.firebaseKey}/stock`] = newStock;
+                }
+            });
+
+            const updates = {};
+            updates[`consumption_entries/${postingRef.key}`] = {
+                postingNo: postingId,
+                date: dateVal,
+                indent: indentVal,
+                receiver: receiverVal,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                rows: entriesData
+            };
+            
+            Object.assign(updates, stockUpdates);
+
+            db.ref().update(updates)
+            .then(() => {
+                showCustomPopup("সফল!", `✅ ফায়ারবেজে ডেটা সেভ এবং স্টক আপডেট সম্পন্ন হয়েছে!\n\nটার্গেট ইস্যু নম্বর: ${postingId}`, true);
+                
+                document.getElementById('entryIndent').value = '';
+                document.getElementById('entryReceiver').value = '';
+
+                tbody.innerHTML = '';
+                addNewRow();
+                fetchAvailableStock();
+            })
+            .catch((error) => {
+                console.error(error);
+                showCustomPopup("ত্রুটি", "⚠️ সেভ করতে সমস্যা হয়েছে: " + error.message, false);
+            })
+            .finally(() => {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = "🔥 ফায়ারবেজে সেভ করুন (Ctrl + S)";
+                document.getElementById('mainContainer').style.pointerEvents = 'auto';
+                document.getElementById('entryIndent').focus();
+            });
+
+        }).catch((error) => {
+            console.error(error);
+            showCustomPopup("ত্রুটি", "⚠️ ইস্যু নম্বর তৈরি করতে সমস্যা হয়েছে!", false);
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = "🔥 ফায়ারবেজে সেভ করুন (Ctrl + S)";
+            document.getElementById('mainContainer').style.pointerEvents = 'auto';
+        });
+    }
+
+    document.getElementById('saveBtn').addEventListener('click', saveToFirebase);
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            saveToFirebase();
+        }
+    });
+</script>
+
+</body>
+</html>
