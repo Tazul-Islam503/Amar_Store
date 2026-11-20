@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,22 +7,21 @@
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts: Hind Siliguri -->
-  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Firebase JS SDK v9 -->
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Firebase JS SDK v9 (Compat) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
   <style>
     body {
-      font-family: 'Hind Siliguri', sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: #f1f5f9;
     }
     input:focus, select:focus {
       outline: none;
       box-shadow: inset 0 0 0 2px #2563eb;
     }
-    /* ড্রপডাউন লিস্ট যেন সবসময় সবার উপরে থাকে এবং কোনো ডিভের নিচে ঢাকা না পড়ে */
     .suggestions-box {
       position: absolute !important;
       left: 0;
@@ -75,7 +74,6 @@
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <div>
           <h1 class="text-xl md:text-2xl font-bold tracking-wide">Material_Purchase</h1>
-         
         </div>
       </div>
     </div>
@@ -85,60 +83,60 @@
       <div class="p-4 md:p-6 bg-slate-50 border-b border-slate-200">
         <div class="max-w-4xl mx-auto space-y-3">
           
-          <!-- ১. কারেন্ট ডেট -->
+          <!-- Current Date -->
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-            <label class="w-full sm:w-48 text-xs font-semibold text-slate-700">১. কারেন্ট ডেট</label>
+            <label for="currentDate" class="w-full sm:w-48 text-xs font-semibold text-slate-700">Current Date</label>
             <div class="w-full sm:flex-1">
               <input type="date" id="currentDate" class="hdr-input w-full px-3 py-1.5 text-sm border border-slate-300 rounded bg-white font-medium" required>
             </div>
           </div>
 
-          <!-- ২. রিকুইজিশন নাম্বার -->
+          <!-- Requisition No -->
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-            <label class="w-full sm:w-48 text-xs font-semibold text-slate-700">২. রিকুইজিশন নাম্বার</label>
+            <label for="reqNo" class="w-full sm:w-48 text-xs font-semibold text-slate-700">Requisition No</label>
             <div class="w-full sm:flex-1">
-              <input type="text" id="reqNo" placeholder="REQ-0001" class="hdr-input w-full px-3 py-1.5 text-sm border border-slate-300 rounded bg-white font-medium" required>
+              <input type="text" id="reqNo" class="hdr-input w-full px-3 py-1.5 text-sm border border-slate-300 rounded bg-white font-medium" required>
             </div>
           </div>
 
-          <!-- ৩. সাপ্লায়ার নেম -->
+          <!-- Supplier Name -->
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-            <label class="w-full sm:w-48 text-xs font-semibold text-slate-700">৩. সাপ্লায়ার নাম</label>
+            <label for="supplierName" class="w-full sm:w-48 text-xs font-semibold text-slate-700">Supplier Name</label>
             <div class="w-full sm:flex-1 relative">
-              <input type="text" id="supplierName" autocomplete="off" placeholder="সাপ্লায়ার টাইপ করুন..." class="hdr-input dropdown-trigger w-full px-3 py-1.5 text-sm border border-slate-300 rounded bg-white font-medium" required data-type="supplier">
+              <input type="text" id="supplierName" autocomplete="off" class="hdr-input dropdown-trigger w-full px-3 py-1.5 text-sm border border-slate-300 rounded bg-white font-medium" required data-type="supplier">
               <ul class="suggestions-box hidden"></ul>
             </div>
           </div>
 
-          <!-- ৪. সাপ্লায়ার নাম্বার (Required) -->
+          <!-- Challan No -->
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-            <label class="w-full sm:w-48 text-xs font-semibold text-slate-700">৪. চালান নাম্বার <span class="text-red-500">*</span></label>
+            <label for="supplierNum" class="w-full sm:w-48 text-xs font-semibold text-slate-700">Challan No <span class="text-red-500">*</span></label>
             <div class="w-full sm:flex-1">
-              <input type="text" id="supplierNum" placeholder="01700000000" class="hdr-input w-full px-3 py-1.5 text-sm border border-slate-300 rounded bg-white font-medium" required>
+              <input type="text" id="supplierNum" class="hdr-input w-full px-3 py-1.5 text-sm border border-slate-300 rounded bg-white font-medium" required>
             </div>
           </div>
 
-          <!-- ৫. চালান ডেট (Required) -->
+          <!-- Challan Date -->
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-            <label class="w-full sm:w-48 text-xs font-semibold text-slate-700">৫. চালান ডেট <span class="text-red-500">*</span></label>
+            <label for="challanDate" class="w-full sm:w-48 text-xs font-semibold text-slate-700">Challan Date <span class="text-red-500">*</span></label>
             <div class="w-full sm:flex-1">
               <input type="date" id="challanDate" class="hdr-input w-full px-3 py-1.5 text-sm border border-slate-300 rounded bg-white font-medium" required>
             </div>
           </div>
 
-          <!-- ৬. ERP MRR -->
+          <!-- ERP MRR -->
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-            <label class="w-full sm:w-48 text-xs font-semibold text-slate-700">৬. ERP MRR</label>
+            <label for="erpMrr" class="w-full sm:w-48 text-xs font-semibold text-slate-700">ERP MRR</label>
             <div class="w-full sm:flex-1">
-              <input type="text" id="erpMrr" placeholder="ERP MRR নম্বর" class="hdr-input w-full px-3 py-1.5 text-sm border border-slate-300 rounded bg-white font-medium">
+              <input type="text" id="erpMrr" class="hdr-input w-full px-3 py-1.5 text-sm border border-slate-300 rounded bg-white font-medium">
             </div>
           </div>
 
-          <!-- ৭. হেডার রিমার্কস -->
+          <!-- Remarks -->
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-            <label class="w-full sm:w-48 text-xs font-semibold text-slate-700">৭. রিমার্কস</label>
+            <label for="headerRemarks" class="w-full sm:w-48 text-xs font-semibold text-slate-700">Remarks</label>
             <div class="w-full sm:flex-1">
-              <input type="text" id="headerRemarks" placeholder="মন্তব্য (যদি থাকে)" class="hdr-input w-full px-3 py-1.5 text-sm border border-slate-300 rounded bg-white font-medium">
+              <input type="text" id="headerRemarks" class="hdr-input w-full px-3 py-1.5 text-sm border border-slate-300 rounded bg-white font-medium">
             </div>
           </div>
 
@@ -146,26 +144,26 @@
       </div>
 
       <!-- Main Items Table -->
-      <div class="p-4 md:p-6" style="overflow: visible !important;">
+      <div class="p-4 md:p-6 overflow-x-auto" style="overflow: visible !important;">
         <table class="w-full text-left border-collapse border border-slate-300 text-sm" style="overflow: visible !important;">
           <thead>
             <tr class="bg-slate-200 text-slate-700 font-bold">
               <th class="border border-slate-300 px-3 py-2 w-12 text-center">SL</th>
-              <th class="border border-slate-300 px-3 py-2 min-w-[200px]">১. ম্যাটেরিয়ালস নেম <span class="text-red-500">*</span></th>
-              <th class="border border-slate-300 px-3 py-2 w-28">২. ইউনিট <span class="text-red-500">*</span></th>
-              <th class="border border-slate-300 px-3 py-2 w-28 text-right">৩. কোয়ান্টিটি <span class="text-red-500">*</span></th>
-              <th class="border border-slate-300 px-3 py-2 w-32 text-right">৪. টোটাল (টাকা)</th>
-              <th class="border border-slate-300 px-3 py-2 w-28 text-right bg-slate-300">৫. রেট (Auto)</th>
-              <th class="border border-slate-300 px-3 py-2 min-w-[170px]">৬. রিকুয়েস্ট / পারচেস ফর <span class="text-red-500">*</span></th>
-              <th class="border border-slate-300 px-3 py-2 min-w-[160px]">৭. ফিজিক্যাল আইডেন্টিটি</th>
-              <th class="border border-slate-300 px-3 py-2 min-w-[150px]">৮. রিমার্কস</th>
+              <th class="border border-slate-300 px-3 py-2 min-w-[200px]">Materials Name <span class="text-red-500">*</span></th>
+              <th class="border border-slate-300 px-3 py-2 w-28">Unit <span class="text-red-500">*</span></th>
+              <th class="border border-slate-300 px-3 py-2 w-28 text-right">Quantity <span class="text-red-500">*</span></th>
+              <th class="border border-slate-300 px-3 py-2 w-32 text-right">Total</th>
+              <th class="border border-slate-300 px-3 py-2 w-28 text-right bg-slate-300">Rate</th>
+              <th class="border border-slate-300 px-3 py-2 min-w-[170px]">Request / Purchase For <span class="text-red-500">*</span></th>
+              <th class="border border-slate-300 px-3 py-2 min-w-[160px]">Physical Identity</th>
+              <th class="border border-slate-300 px-3 py-2 min-w-[150px]">Remarks</th>
               <th class="border border-slate-300 px-2 py-2 w-10 text-center"></th>
             </tr>
           </thead>
           <tbody id="tableBody"></tbody>
           <tfoot>
             <tr class="bg-slate-100 font-bold text-slate-800">
-              <td colspan="3" class="border border-slate-300 px-3 py-2 text-right">সর্বমোট:</td>
+              <td colspan="3" class="border border-slate-300 px-3 py-2 text-right">Total:</td>
               <td id="grandQty" class="border border-slate-300 px-3 py-2 text-right text-blue-700 font-bold">0.00</td>
               <td id="grandTotal" class="border border-slate-300 px-3 py-2 text-right text-emerald-700 font-bold">0.00</td>
               <td colspan="5" class="border border-slate-300 bg-slate-200 text-right p-2">
@@ -185,10 +183,10 @@
   <!-- Warning Alert Modal -->
   <div id="alertModal" class="fixed inset-0 bg-slate-900/60 z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl border border-amber-200 max-w-sm w-full p-6 text-center">
-      <div class="w-14 h-14 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl font-bold">⚠️</div>
-      <h3 class="text-lg font-bold text-slate-800 mb-1">অসম্পূর্ণ ডাটা!</h3>
-      <p id="alertMessage" class="text-xs text-slate-600 mb-5">সঠিক তথ্য দিন।</p>
-      <button type="button" onclick="closeAlertModal()" class="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm rounded-xl transition">ঠিক আছে</button>
+      <div class="w-14 h-14 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl font-bold">!</div>
+      <h3 class="text-lg font-bold text-slate-800 mb-1">Incomplete Data</h3>
+      <p id="alertMessage" class="text-xs text-slate-600 mb-5">Please provide valid information.</p>
+      <button type="button" onclick="closeAlertModal()" class="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm rounded-xl transition">OK</button>
     </div>
   </div>
 
@@ -196,20 +194,24 @@
   <div id="lmrModal" class="fixed inset-0 bg-slate-900/60 z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full p-6 text-center">
       <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">✓</div>
-      <h3 class="text-xl font-bold text-slate-800 mb-1">ডাটা সফলভাবে পোস্ট ও স্টক আপডেট হয়েছে!</h3>
-      <p class="text-sm text-slate-500 mb-4">নিচের লোকাল MRR পোস্টিং নম্বরটি নোট করে রাখুন:</p>
+      <h3 class="text-xl font-bold text-slate-800 mb-1">Data Posted and Stock Updated</h3>
+      <p class="text-sm text-slate-500 mb-4">Note down the Local MRR Posting No below:</p>
       
       <div class="bg-slate-100 border-2 border-dashed border-emerald-500 rounded-xl p-4 mb-6">
         <span class="text-xs text-slate-400 block uppercase font-bold tracking-wider mb-1">Local MRR Posting No</span>
         <span id="modalLmrNo" class="text-3xl font-extrabold text-emerald-600 tracking-widest font-mono">LMR-00001</span>
       </div>
 
-      <button type="button" onclick="closeLmrModal()" class="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl shadow transition">ঠিক আছে, ক্লোজ করুন</button>
+      <button type="button" onclick="closeLmrModal()" class="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl shadow transition">Close</button>
     </div>
   </div>
-   <!---Back to home---->
- <a href="index.html" class="flex items-center gap-3 px-4 py-2.5 rounded bg-blue-600 text-white font-medium" id="back">
-                <i class="fa-solid fa-chart-pie w-5"></i> Back</a>
+
+  <!-- Back to home -->
+  <div class="max-w-[1500px] mx-auto mt-4">
+    <a href="index.html" class="inline-flex items-center gap-3 px-4 py-2.5 rounded bg-blue-600 hover:bg-blue-700 text-white font-medium transition" id="back">
+      <i class="fa-solid fa-chart-pie w-5"></i> Back
+    </a>
+  </div>
 
   <script>
     const defaultFirebaseConfig = {
@@ -224,8 +226,19 @@
 
     let firebaseDb = null;
     let productDatabase = [];
-    // ডিফল্ট সাপ্লায়ার লিস্টের সাথে ফায়ারবেসের রিসিভ ডেটা ডায়নামিক্যালি যুক্ত হবে
-    let dynamicSuppliers = ['BSRM Steels Ltd', 'Seven Rings Cement', 'Crown Cement PLC', 'Shah Cement', 'AKG Steel', 'Bashundhara Paper', 'Local Supplier'];
+    let dynamicSuppliers = [
+      'BSRM Steels Ltd',
+      'Seven Rings Cement',
+      'Crown Cement PLC',
+      'Shah Cement',
+      'AKG Steel',
+      'Bashundhara Paper',
+      'Local Supplier'
+    ];
+
+    const PRESETS = {
+      unit: ['Kg', 'Ton', 'Bag', 'Pcs', 'Cft', 'Sft', 'Ltr', 'Meter', 'Coil', 'Box', 'Drum', 'Set']
+    };
 
     function initFirebase() {
       try {
@@ -234,8 +247,8 @@
         }
         firebaseDb = firebase.database();
         fetchStockSummary();
-        fetchReceivingSuppliers(); // রিসিভ ডেটা থেকে সাপ্লায়ার ফেচ করার ফাংশন
-      } catch(e) {
+        fetchReceivingSuppliers();
+      } catch (e) {
         console.error("Firebase Init Error:", e);
       }
     }
@@ -247,7 +260,7 @@
         productDatabase = [];
         if (data) {
           Object.values(data).forEach(item => {
-            if (item.name) {
+            if (item && item.name) {
               productDatabase.push({
                 name: item.name.toString().trim(),
                 unit: item.unit ? item.unit.toString().trim() : "Pcs",
@@ -259,16 +272,23 @@
       });
     }
 
-    // ফায়ারবেসের 'material_purchase' (রিসিভিং ডাটা) থেকে ইউনিক সাপ্লায়ার নেম ফেচ করা
     function fetchReceivingSuppliers() {
       if (!firebaseDb) return;
       firebaseDb.ref('material_purchase').on('value', (snapshot) => {
         const data = snapshot.val();
-        let supSet = new Set(['BSRM Steels Ltd', 'Seven Rings Cement', 'Crown Cement PLC', 'Shah Cement', 'AKG Steel', 'Bashundhara Paper', 'Local Supplier']);
-        
+        const supSet = new Set([
+          'BSRM Steels Ltd',
+          'Seven Rings Cement',
+          'Crown Cement PLC',
+          'Shah Cement',
+          'AKG Steel',
+          'Bashundhara Paper',
+          'Local Supplier'
+        ]);
+
         if (data) {
           Object.values(data).forEach(record => {
-            if (record.supplierName && record.supplierName.trim() !== '') {
+            if (record && record.supplierName && record.supplierName.trim() !== '') {
               supSet.add(record.supplierName.trim());
             }
           });
@@ -284,7 +304,7 @@
     });
 
     function formatStockValue(val) {
-      let num = parseFloat(val);
+      const num = parseFloat(val);
       if (isNaN(num)) return "0";
       return Number.isInteger(num) ? num.toString() : num.toFixed(2);
     }
@@ -336,7 +356,6 @@
             suggestionsBox.appendChild(li);
           });
         } else if (type === 'supplier') {
-          // রিসিভ ডেটা থেকে আসা ডায়নামিক ও ইউনিক সাপ্লায়ার লিস্ট ফিল্টার করা হচ্ছে
           matches = dynamicSuppliers.filter(s => s.toLowerCase().includes(query));
           matches.forEach((sup, idx) => {
             const li = document.createElement('li');
@@ -359,10 +378,6 @@
       }
     });
 
-    const PRESETS = {
-      unit: ['Kg', 'Ton', 'Bag', 'Pcs', 'Cft', 'Sft', 'Ltr', 'Meter', 'Coil', 'Box', 'Drum', 'Set']
-    };
-
     function selectMaterialItem(inputEl, nameVal, unitVal) {
       inputEl.value = nameVal;
       const tr = inputEl.closest('tr');
@@ -371,10 +386,11 @@
         if (unitInput) unitInput.value = unitVal;
         calculateRow(tr);
       }
-      const suggestionsBox = inputEl.closest('td').querySelector('.suggestions-box');
+      const container = inputEl.closest('td') || inputEl.closest('div.relative');
+      const suggestionsBox = container ? container.querySelector('.suggestions-box') : null;
       if (suggestionsBox) suggestionsBox.classList.add('hidden');
 
-      const inputs = Array.from(tr ? tr.querySelectorAll('input:not([readonly])') : document.querySelectorAll('.hdr-input'));
+      const inputs = tr ? Array.from(tr.querySelectorAll('input:not([readonly])')) : Array.from(document.querySelectorAll('.hdr-input'));
       const currIdx = inputs.indexOf(inputEl);
       if (currIdx >= 0 && currIdx < inputs.length - 1) {
         inputs[currIdx + 1].focus();
@@ -508,10 +524,11 @@
                 if (rIdx === rows.length - 1) {
                   addNewRow();
                 }
-                const nextRowFirst = rows[rIdx + 1] ? rows[rIdx + 1].querySelector('input') : document.querySelector('#tableBody tr:last-child input');
+                const updatedRows = Array.from(document.querySelectorAll('#tableBody tr'));
+                const nextRowFirst = updatedRows[rIdx + 1] ? updatedRows[rIdx + 1].querySelector('input') : null;
                 if (nextRowFirst) nextRowFirst.focus();
               } else {
-                showAlertModal("নতুন রো জেনারেট করার পূর্বে ম্যাটেরিয়ালস নেম পূরণ করুন।");
+                showAlertModal("Please enter Materials Name before generating a new row.");
               }
             }
             return;
@@ -529,6 +546,20 @@
       document.getElementById('alertModal').classList.add('hidden');
     }
 
+    function closeLmrModal() {
+      document.getElementById('lmrModal').classList.add('hidden');
+      resetFormAfterSubmit();
+    }
+
+    function resetFormAfterSubmit() {
+      document.getElementById('purchaseForm').reset();
+      document.getElementById('currentDate').valueAsDate = new Date();
+      const body = document.getElementById('tableBody');
+      body.innerHTML = '';
+      addNewRow();
+      calculateGrandTotal();
+    }
+
     function addNewRow() {
       const body = document.getElementById('tableBody');
       const rowCount = body.querySelectorAll('tr').length + 1;
@@ -539,37 +570,37 @@
         <td class="border border-slate-300 px-3 py-1.5 text-center font-semibold text-slate-500 sl-no">${rowCount}</td>
         
         <td class="border border-slate-300 p-1 relative" style="overflow: visible;">
-          <input type="text" class="cell-name dropdown-trigger w-full px-2 py-1 text-sm border-0 focus:bg-blue-50 font-medium" placeholder="ম্যাটেরিয়াল নাম..." data-type="material" autocomplete="off">
+          <input type="text" class="cell-name dropdown-trigger w-full px-2 py-1 text-sm border-0 focus:bg-blue-50 font-medium" data-type="material" autocomplete="off">
           <ul class="suggestions-box hidden"></ul>
         </td>
 
         <td class="border border-slate-300 p-1 relative" style="overflow: visible;">
-          <input type="text" class="cell-unit dropdown-trigger w-full px-2 py-1 text-sm border-0 focus:bg-blue-50" placeholder="Kg/Bag" data-type="unit" autocomplete="off">
+          <input type="text" class="cell-unit dropdown-trigger w-full px-2 py-1 text-sm border-0 focus:bg-blue-50" data-type="unit" autocomplete="off">
           <ul class="suggestions-box hidden"></ul>
         </td>
 
         <td class="border border-slate-300 p-1">
-          <input type="number" step="any" min="0" class="cell-qty w-full px-2 py-1 text-sm text-right border-0 focus:bg-blue-50 font-mono" placeholder="0" oninput="calculateRow(this.closest('tr'))">
+          <input type="number" step="any" min="0" class="cell-qty w-full px-2 py-1 text-sm text-right border-0 focus:bg-blue-50 font-mono" oninput="calculateRow(this.closest('tr'))">
         </td>
 
         <td class="border border-slate-300 p-1">
-          <input type="number" step="any" min="0" class="cell-total w-full px-2 py-1 text-sm text-right border-0 focus:bg-blue-50 font-mono" placeholder="0.00" oninput="calculateRow(this.closest('tr'))">
+          <input type="number" step="any" min="0" class="cell-total w-full px-2 py-1 text-sm text-right border-0 focus:bg-blue-50 font-mono" oninput="calculateRow(this.closest('tr'))">
         </td>
 
         <td class="border border-slate-300 p-1 bg-slate-100">
-          <input type="text" class="cell-rate w-full px-2 py-1 text-sm text-right border-0 bg-transparent font-mono font-bold text-slate-700" readonly placeholder="0.00">
+          <input type="text" class="cell-rate w-full px-2 py-1 text-sm text-right border-0 bg-transparent font-mono font-bold text-slate-700" readonly>
         </td>
 
         <td class="border border-slate-300 p-1">
-          <input type="text" class="cell-req w-full px-2 py-1 text-sm border-0 focus:bg-blue-50" placeholder="প্রজেক্ট / সাইট নাম">
+          <input type="text" class="cell-req w-full px-2 py-1 text-sm border-0 focus:bg-blue-50">
         </td>
 
         <td class="border border-slate-300 p-1">
-          <input type="text" class="cell-physical w-full px-2 py-1 text-sm border-0 focus:bg-blue-50" placeholder="আইডেন্টিটি টেক্সট">
+          <input type="text" class="cell-physical w-full px-2 py-1 text-sm border-0 focus:bg-blue-50">
         </td>
 
         <td class="border border-slate-300 p-1">
-          <input type="text" class="cell-remarks w-full px-2 py-1 text-sm border-0 focus:bg-blue-50" placeholder="মন্তব্য">
+          <input type="text" class="cell-remarks w-full px-2 py-1 text-sm border-0 focus:bg-blue-50">
         </td>
 
         <td class="border border-slate-300 p-1 text-center">
@@ -641,7 +672,7 @@
               nextNum = parseInt(match[0], 10) + 1;
             }
           }
-        } catch(e) {
+        } catch (e) {
           console.warn("LMR Fetch error, fallback sequence used", e);
         }
       } else {
@@ -664,37 +695,41 @@
 
     async function executeSubmissionTask(formData, items, btn, originalBtnText) {
       try {
-        if (firebaseDb) {
-          const lmrNo = await generate5DigitLMR();
-          formData.lmrNo = lmrNo;
-
-          await firebaseDb.ref('material_purchase').push(formData);
-
-          for (const item of items) {
-            const safeKey = `${item.materialName}_${item.unit}`.replace(/[.#$/[\]]/g, "_");
-            const stockRef = firebaseDb.ref(`stock_summary/${safeKey}`);
-
-            await stockRef.transaction((currentData) => {
-              if (currentData === null) {
-                return {
-                  name: item.materialName,
-                  unit: item.unit,
-                  stock: item.quantity
-                };
-              } else {
-                return {
-                  ...currentData,
-                  stock: (parseFloat(currentData.stock) || 0) + item.quantity
-                };
-              }
-            });
-          }
-
-          document.getElementById('modalLmrNo').innerText = lmrNo;
-          document.getElementById('lmrModal').classList.remove('hidden');
+        if (!firebaseDb) {
+          showAlertModal("Firebase database connection is unavailable.");
+          return;
         }
+
+        const lmrNo = await generate5DigitLMR();
+        formData.lmrNo = lmrNo;
+        formData.createdAt = new Date().toISOString();
+
+        await firebaseDb.ref('material_purchase').push(formData);
+
+        for (const item of items) {
+          const safeKey = `${item.materialName}_${item.unit}`.replace(/[.#$/[\]]/g, "_");
+          const stockRef = firebaseDb.ref(`stock_summary/${safeKey}`);
+
+          await stockRef.transaction((currentData) => {
+            if (currentData === null) {
+              return {
+                name: item.materialName,
+                unit: item.unit,
+                stock: item.quantity
+              };
+            } else {
+              return {
+                ...currentData,
+                stock: (parseFloat(currentData.stock) || 0) + item.quantity
+              };
+            }
+          });
+        }
+
+        document.getElementById('modalLmrNo').innerText = lmrNo;
+        document.getElementById('lmrModal').classList.remove('hidden');
       } catch (err) {
-        alert("ত্রুটি: " + err.message);
+        showAlertModal("Error: " + err.message);
       } finally {
         btn.disabled = false;
         btn.innerHTML = originalBtnText;
@@ -721,7 +756,7 @@
         if (name !== '' || unit !== '' || qtyVal !== '' || reqFor !== '') {
           if (!name || !unit || qtyVal === '' || parseFloat(qtyVal) <= 0 || !reqFor) {
             hasValidationError = true;
-            errorMessage = `রো #${index + 1}: ম্যাটেরিয়াল নাম, ইউনিট, কোয়ান্টিটি এবং রিকোয়েস্ট ফর ফিল্ডগুলো অবশ্যই পূরণ করতে হবে!`;
+            errorMessage = `Row #${index + 1}: Materials Name, Unit, Quantity, and Request / Purchase For are required.`;
           } else {
             validItemsCount++;
             items.push({
@@ -744,41 +779,33 @@
       }
 
       if (validItemsCount === 0) {
-        showAlertModal("অনুগ্রহ করে ম্যাটেরিয়াল টেবিলে অন্তত একটি আইটেমের সঠিক তথ্য পূরণ করুন।");
+        showAlertModal("Please enter at least one material item.");
         return;
       }
 
       const btn = document.getElementById('submitBtn');
       const originalBtnText = btn.innerHTML;
       btn.disabled = true;
-      btn.innerHTML = `ওয়েটিং লিস্টে আছে...`;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Submitting...`;
+
+      const grandQty = items.reduce((sum, item) => sum + item.quantity, 0);
+      const grandTotal = items.reduce((sum, item) => sum + item.totalAmount, 0);
 
       const formData = {
         currentDate: document.getElementById('currentDate').value,
-        requisitionNo: document.getElementById('reqNo').value.trim(),
+        reqNo: document.getElementById('reqNo').value.trim(),
         supplierName: document.getElementById('supplierName').value.trim(),
-        supplierNumber: document.getElementById('supplierNum').value.trim(),
+        supplierNum: document.getElementById('supplierNum').value.trim(),
         challanDate: document.getElementById('challanDate').value,
         erpMrr: document.getElementById('erpMrr').value.trim(),
         headerRemarks: document.getElementById('headerRemarks').value.trim(),
-        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        grandQty: grandQty,
+        grandTotal: grandTotal,
         items: items
       };
 
-      submissionQueue.push(() => {
-        executeSubmissionTask(formData, items, btn, originalBtnText);
-      });
-
+      submissionQueue.push(() => executeSubmissionTask(formData, items, btn, originalBtnText));
       processSubmissionQueue();
-    }
-
-    function closeLmrModal() {
-      document.getElementById('lmrModal').classList.add('hidden');
-      document.getElementById('purchaseForm').reset();
-      document.getElementById('currentDate').valueAsDate = new Date();
-      document.getElementById('tableBody').innerHTML = '';
-      addNewRow();
-      calculateGrandTotal();
     }
   </script>
 </body>
