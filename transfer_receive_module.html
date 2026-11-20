@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Transfer Receive Module</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f3f4f6;
+      color: #111827;
+      padding: 24px 16px 60px 16px;
+    }
+
+    .container {
+      max-width: 1320px;
+      margin: 0 auto;
+    }
+
+    /* Centered Header Card */
+    .header-card {
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: 24px;
+      margin: 0 auto 20px auto;
+      max-width: 720px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+
+    .header-title {
+      text-align: center;
+      font-size: 20px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 18px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .header-grid {
+      display: grid;
+      grid-template-columns: 190px 1fr;
+      gap: 12px 14px;
+      align-items: center;
+    }
+
+    .header-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      text-align: right;
+    }
+
+    .header-input {
+      width: 100%;
+      padding: 7px 10px;
+      font-size: 13px;
+      color: #111827;
+      background-color: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .header-input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    }
+
+    /* Materials Table Card */
+    .table-card {
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1060px;
+    }
+
+    thead th {
+      background-color: #f8fafc;
+      color: #1e293b;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: left;
+      padding: 9px 8px;
+      border: 1px solid #cbd5e1;
+      white-space: nowrap;
+    }
+
+    thead th.center {
+      text-align: center;
+    }
+
+    tbody td {
+      padding: 5px 6px;
+      border: 1px solid #cbd5e1;
+      vertical-align: middle;
+    }
+
+    td.sl-cell {
+      text-align: center;
+      font-weight: 600;
+      font-size: 13px;
+      color: #334155;
+      background-color: #f9fafb;
+      width: 48px;
+    }
+
+    .cell-input {
+      width: 100%;
+      padding: 6px 8px;
+      font-size: 13px;
+      color: #111827;
+      background-color: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      outline: none;
+    }
+
+    .cell-input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    }
+
+    .cell-input.invalid {
+      border-color: #dc2626 !important;
+      background-color: #fef2f2;
+      box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.15) !important;
+    }
+
+    .del-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border: 1px solid #fecaca;
+      background-color: #fff5f5;
+      color: #dc2626;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      transition: all 0.15s ease;
+    }
+
+    .del-btn:hover {
+      background-color: #dc2626;
+      color: #ffffff;
+      border-color: #dc2626;
+    }
+
+    /* Floating Searchable Dropdown Menu */
+    .floating-dropdown {
+      position: fixed;
+      z-index: 999999;
+      background-color: #ffffff;
+      border: 1px solid #94a3b8;
+      border-radius: 6px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
+      max-height: 240px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .floating-dropdown.open {
+      display: block;
+    }
+
+    .dropdown-option {
+      padding: 8px 10px;
+      font-size: 13px;
+      color: #111827;
+      cursor: pointer;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .dropdown-option:last-child {
+      border-bottom: none;
+    }
+
+    .dropdown-option-label {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dropdown-unit-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background-color: #e0e7ff;
+      color: #1e40af;
+      flex-shrink: 0;
+      letter-spacing: 0.3px;
+    }
+
+    .dropdown-option:hover,
+    .dropdown-option.active {
+      background-color: #2563eb;
+      color: #ffffff;
+    }
+
+    .dropdown-option:hover .dropdown-unit-badge,
+    .dropdown-option.active .dropdown-unit-badge {
+      background-color: rgba(255, 255, 255, 0.22);
+      color: #ffffff;
+    }
+
+    .dropdown-empty {
+      padding: 8px 10px;
+      font-size: 12px;
+      color: #6b7280;
+      font-style: italic;
+    }
+
+    /* Bottom Submit Button */
+    .submit-wrapper {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .submit-btn {
+      background-color: #1d4ed8;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 32px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(29, 78, 216, 0.25);
+      transition: background-color 0.15s ease;
+    }
+
+    .submit-btn:hover {
+      background-color: #1e40af;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 1000000;
+      background-color: #1f2937;
+      color: #ffffff;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-8px);
+      transition: all 0.2s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast.error {
+      background-color: #b91c1c;
+    }
+
+    .toast.success {
+      background-color: #15803d;
+    }
+
+    /* JSON Preview Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      z-index: 1000001;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #ffffff;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 720px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .modal-body {
+      padding: 16px;
+      overflow: auto;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      white-space: pre;
+    }
+
+    .modal-footer {
+      padding: 12px 18px;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .btn-secondary {
+      padding: 7px 14px;
+      font-size: 13px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #1f2937;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .btn-copy {
+      padding: 7px 14px;
+      font-size: 13px;
+      border: none;
+      background: #2563eb;
+      color: #ffffff;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Centered Header Section -->
+    <div class="header-card">
+      <div class="header-title">Transfer Receive</div>
+      <div class="header-grid">
+        <label class="header-label" for="receivedDate">Received Date</label>
+        <input type="date" id="receivedDate" class="header-input" />
+
+        <label class="header-label" for="projectName">Project name</label>
+        <input type="text" id="projectName" class="header-input" />
+
+        <label class="header-label" for="gatePassNo">Gate pass no</label>
+        <input type="text" id="gatePassNo" class="header-input" />
+
+        <label class="header-label" for="gatePassDate">Gate pass date</label>
+        <input type="date" id="gatePassDate" class="header-input" />
+
+        <label class="header-label" for="refIndent">Ref/indent</label>
+        <input type="text" id="refIndent" class="header-input" />
+
+        <label class="header-label" for="headerRemarks">Remarks</label>
+        <input type="text" id="headerRemarks" class="header-input" />
+      </div>
+    </div>
+
+    <!-- Materials Table Section -->
+    <div class="table-card">
+      <table id="materialsTable">
+        <thead>
+          <tr>
+            <th class="center" style="width: 50px;">SL</th>
+            <th style="min-width: 190px;">Item name *</th>
+            <th style="min-width: 110px;">Unit *</th>
+            <th style="min-width: 105px;">Quantity *</th>
+            <th style="min-width: 150px;">For User *</th>
+            <th style="min-width: 170px;">Physical identification</th>
+            <th style="min-width: 140px;">Erp trn no</th>
+            <th style="min-width: 170px;">remarks</th>
+            <th class="center" style="width: 48px;"></th>
+          </tr>
+        </thead>
+        <tbody id="materialsBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Bottom Submit Button -->
+    <div class="submit-wrapper">
+      <button type="button" id="submitBtn" class="submit-btn">Submit</button>
+    </div>
+  </div>
+
+  <!-- Global Top-Layer Searchable Dropdown -->
+  <div id="floatingDropdown" class="floating-dropdown" role="listbox"></div>
+
+  <!-- Toast Message -->
+  <div id="toast" class="toast"></div>
+
+  <!-- JSON Payload Modal -->
+  <div id="jsonModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span>Transfer Receive Payload (JSON)</span>
+        <button type="button" id="closeModalBtn" class="btn-secondary">Close</button>
+      </div>
+      <div id="jsonOutput" class="modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" id="copyJsonBtn" class="btn-copy">Copy JSON</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Stock / Last-Received unit mapped per Item Name
+    // Shown on the right side of the Item when searching, and auto-set in Unit on selection
+    const ITEM_DEFAULT_UNIT = {
+      "Gear Oil": "DRUM",
+      "Gear Oil 80W-90": "PAIL",
+      "Engine Oil 15W-40": "DRUM",
+      "Hydraulic Oil": "LTR",
+      "Hydraulic Pump": "PCS",
+      "Excavator Bucket": "PCS",
+      "Air Filter Element": "PCS",
+      "Fuel Filter Assembly": "PCS",
+      "Hydraulic Hose Pipe": "MTR",
+      "Steel Bolt & Nut Set": "SET",
+      "Brake Pad Set": "SET",
+      "Alternator 24V": "PCS",
+      "Radiator Coolant": "LTR",
+      "Bearing Assembly": "PCS"
+    };
+
+    const ITEM_OPTIONS = Object.keys(ITEM_DEFAULT_UNIT);
+    const UNIT_OPTIONS = ["DRUM", "PAIL", "LTR", "PCS", "SET", "KG", "MTR", "BOX", "ROLL", "GAL"];
+
+    // Column indices:
+    // 0: item_name, 1: unit, 2: quantity, 3: for_user, 4: physical_identification, 5: erp_trn_no, 6: remarks
+    const CASCADE_COPY_INDICES = [3, 4, 5, 6];
+    const MANDATORY_INDICES = [0, 1, 2, 3];
+
+    const headerInputs = Array.from(document.querySelectorAll(".header-card .header-input"));
+    const tbody = document.getElementById("materialsBody");
+    const floatingDropdown = document.getElementById("floatingDropdown");
+    const toastEl = document.getElementById("toast");
+    const jsonModal = document.getElementById("jsonModal");
+    const jsonOutput = document.getElementById("jsonOutput");
+
+    let activeDropdownState = {
+      inputEl: null,
+      type: null,
+      filteredList: [],
+      highlightedIndex: -1
+    };
+
+    function showToast(message, type = "info") {
+      toastEl.textContent = message;
+      toastEl.className = "toast show" + (type ? " " + type : "");
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => {
+        toastEl.className = "toast";
+      }, 2800);
+    }
+
+    function focusPassive(el) {
+      if (!el) return;
+      el.focus({ preventScroll: false });
+    }
+
+    function focusFirstTableCell() {
+      const rows = getAllRows();
+      if (rows.length > 0) {
+        const firstRowInputs = getRowInputs(rows[0]);
+        if (firstRowInputs[0]) {
+          focusPassive(firstRowInputs[0]);
+        }
+      }
+    }
+
+    function handleHeaderKeyDown(e) {
+      const idx = headerInputs.indexOf(e.currentTarget);
+      if (idx === -1) return;
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (idx < headerInputs.length - 1) {
+          focusPassive(headerInputs[idx + 1]);
+        } else {
+          focusFirstTableCell();
+        }
+        return;
+      }
+
+      if (e.key === "ArrowDown") {
+        if (idx < headerInputs.length - 1) {
+          e.preventDefault();
+          focusPassive(headerInputs[idx + 1]);
+        } else {
+          e.preventDefault();
+          focusFirstTableCell();
+        }
+        return;
+      }
+
+      if (e.key === "ArrowUp") {
+        if (idx > 0) {
+          e.preventDefault();
+          focusPassive(headerInputs[idx - 1]);
+        }
+        return;
+      }
+
+      if (e.key === "ArrowRight" && e.currentTarget.type === "text") {
+        const el = e.currentTarget;
+        if (el.selectionStart === el.value.length && idx < headerInputs.length - 1) {
+          e.preventDefault();
+          focusPassive(headerInputs[idx + 1]);
+        }
+        return;
+      }
+
+      if (e.key === "ArrowLeft" && e.currentTarget.type === "text") {
+        const el = e.currentTarget;
+        if (el.selectionEnd === 0 && idx > 0) {
+          e.preventDefault();
+          focusPassive(headerInputs[idx - 1]);
+        }
+        return;
+      }
+    }
+
+    headerInputs.forEach((inp) => {
+      inp.addEventListener("keydown", handleHeaderKeyDown);
+    });
+
+    function getStockOrReceivedUnit(itemName) {
+      if (!itemName) return "";
+      const trimmed = itemName.trim().toLowerCase();
+
+      for (const [key, unit] of Object.entries(ITEM_DEFAULT_UNIT)) {
+        if (key.toLowerCase() === trimmed) {
+          return unit;
+        }
+      }
+
+      for (const [key, unit] of Object.entries(ITEM_DEFAULT_UNIT)) {
+        if (key.toLowerCase().includes(trimmed) || trimmed.includes(key.toLowerCase())) {
+          return unit;
+        }
+      }
+
+      return "";
+    }
+
+    function autoSetUnitForRow(tr, itemName) {
+      const inputs = getRowInputs(tr);
+      const unitInput = inputs[1];
+      if (!unitInput) return;
+
+      const matchedUnit = getStockOrReceivedUnit(itemName);
+      if (matchedUnit) {
+        unitInput.value = matchedUnit;
+        unitInput.classList.remove("invalid");
+      }
+    }
+
+    function createInput(type, extraAttrs = {}) {
+      const input = document.createElement("input");
+      input.type = type;
+      input.className = "cell-input";
+      input.autocomplete = "off";
+      Object.entries(extraAttrs).forEach(([k, v]) => {
+        input.setAttribute(k, v);
+      });
+      return input;
+    }
+
+    function createRow(prefill = {}) {
+      const tr = document.createElement("tr");
+
+      const slTd = document.createElement("td");
+      slTd.className = "sl-cell";
+      tr.appendChild(slTd);
+
+      const fields = [
+        { type: "text", colIndex: 0, dropdownType: "item", value: prefill[0] ?? "" },
+        { type: "text", colIndex: 1, dropdownType: "unit", value: prefill[1] ?? "" },
+        { type: "number", colIndex: 2, step: "any", min: "0", value: prefill[2] ?? "" },
+        { type: "text", colIndex: 3, value: prefill[3] ?? "" },
+        { type: "text", colIndex: 4, value: prefill[4] ?? "" },
+        { type: "text", colIndex: 5, value: prefill[5] ?? "" },
+        { type: "text", colIndex: 6, value: prefill[6] ?? "" }
+      ];
+
+      fields.forEach((f) => {
+        const td = document.createElement("td");
+        const attrs = { "data-col": f.colIndex };
+        if (f.step) attrs.step = f.step;
+        if (f.min) attrs.min = f.min;
+        if (f.dropdownType) attrs["data-dropdown"] = f.dropdownType;
+
+        const input = createInput(f.type, attrs);
+        input.value = f.value;
+
+        input.addEventListener("input", () => {
+          input.classList.remove("invalid");
+
+          const rowIndex = getRowIndex(tr);
+          const colIndex = Number(input.dataset.col);
+
+          if (colIndex === 0) {
+            autoSetUnitForRow(tr, input.value);
+          }
+
+          if (CASCADE_COPY_INDICES.includes(colIndex)) {
+            cascadeCopyToSubsequentRows(rowIndex, colIndex, input.value);
+          }
+
+          if (f.dropdownType) {
+            openDropdownForInput(input, f.dropdownType);
+          }
+        });
+
+        input.addEventListener("click", () => {
+          if (f.dropdownType) {
+            openDropdownForInput(input, f.dropdownType);
+          }
+        });
+
+        input.addEventListener("keydown", handleCellKeyDown);
+
+        td.appendChild(input);
+        tr.appendChild(td);
+      });
+
+      const actionTd = document.createElement("td");
+      actionTd.style.textAlign = "center";
+      const delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "del-btn";
+      delBtn.title = "Delete row";
+      delBtn.innerHTML = "&times;";
+      delBtn.addEventListener("click", () => {
+        closeDropdown();
+        const rows = getAllRows();
+        if (rows.length === 1) {
+          getRowInputs(rows[0]).forEach((inp) => {
+            inp.value = "";
+            inp.classList.remove("invalid");
+          });
+          showToast("Row cleared", "info");
+        } else {
+          tr.remove();
+          refreshSerialNumbers();
+          showToast("Row deleted", "info");
+        }
+      });
+      actionTd.appendChild(delBtn);
+      tr.appendChild(actionTd);
+
+      tbody.appendChild(tr);
+      refreshSerialNumbers();
+      return tr;
+    }
+
+    function getAllRows() {
+      return Array.from(tbody.querySelectorAll("tr"));
+    }
+
+    function getRowIndex(tr) {
+      return getAllRows().indexOf(tr);
+    }
+
+    function getRowInputs(tr) {
+      return Array.from(tr.querySelectorAll("input.cell-input"));
+    }
+
+    function refreshSerialNumbers() {
+      getAllRows().forEach((row, idx) => {
+        const slCell = row.querySelector(".sl-cell");
+        if (slCell) slCell.textContent = idx + 1;
+      });
+    }
+
+    function cascadeCopyToSubsequentRows(sourceRowIndex, colIndex, value) {
+      const rows = getAllRows();
+      for (let i = sourceRowIndex + 1; i < rows.length; i++) {
+        const inputs = getRowInputs(rows[i]);
+        if (inputs[colIndex]) {
+          inputs[colIndex].value = value;
+          inputs[colIndex].classList.remove("invalid");
+        }
+      }
+    }
+
+    function getInheritedDefaultsFromLastRow() {
+      const rows = getAllRows();
+      const defaults = {};
+      if (rows.length === 0) return defaults;
+      const lastRowInputs = getRowInputs(rows[rows.length - 1]);
+      CASCADE_COPY_INDICES.forEach((colIdx) => {
+        defaults[colIdx] = lastRowInputs[colIdx] ? lastRowInputs[colIdx].value : "";
+      });
+      return defaults;
+    }
+
+    function validateRowMandatory(tr) {
+      const inputs = getRowInputs(tr);
+      let firstInvalid = null;
+      let isValid = true;
+
+      for (const idx of MANDATORY_INDICES) {
+        const inp = inputs[idx];
+        const val = (inp.value || "").trim();
+        let fieldOk = val.length > 0;
+
+        if (idx === 2) {
+          const num = parseFloat(val);
+          fieldOk = val.length > 0 && !Number.isNaN(num) && num > 0;
+        }
+
+        if (!fieldOk) {
+          inp.classList.add("invalid");
+          if (!firstInvalid) firstInvalid = inp;
+          isValid = false;
+        } else {
+          inp.classList.remove("invalid");
+        }
+      }
+
+      if (!isValid && firstInvalid) {
+        focusPassive(firstInvalid);
+        showToast("Item name, Unit, Quantity (> 0), and For User are required.", "error");
+      }
+
+      return isValid;
+    }
+
+    function positionFloatingDropdown(inputEl) {
+      if (!inputEl) return;
+
+      floatingDropdown.classList.add("open");
+
+      const rect = inputEl.getBoundingClientRect();
+      const minWidth = Math.max(rect.width, 220);
+      const maxLeft = Math.max(8, window.innerWidth - minWidth - 8);
+      const left = Math.min(Math.max(8, rect.left), maxLeft);
+
+      floatingDropdown.style.left = left + "px";
+      floatingDropdown.style.minWidth = minWidth + "px";
+
+      const actualHeight = floatingDropdown.offsetHeight || 40;
+      const gap = 4;
+      const spaceBelow = window.innerHeight - rect.bottom - gap;
+      const spaceAbove = rect.top - gap;
+
+      if (spaceBelow >= actualHeight || spaceBelow >= spaceAbove) {
+        floatingDropdown.style.top = (rect.bottom + gap) + "px";
+      } else {
+        const topAbove = Math.max(8, rect.top - actualHeight - gap);
+        floatingDropdown.style.top = topAbove + "px";
+      }
+    }
+
+    function openDropdownForInput(inputEl, type) {
+      const sourceList = type === "item" ? ITEM_OPTIONS : UNIT_OPTIONS;
+      const query = (inputEl.value || "").trim().toLowerCase();
+
+      const filtered = query
+        ? sourceList.filter((item) => item.toLowerCase().includes(query))
+        : sourceList.slice();
+
+      const optionsWithMeta = filtered.map((val) => ({
+        value: val,
+        unitBadge: type === "item" ? (ITEM_DEFAULT_UNIT[val] || "") : ""
+      }));
+
+      activeDropdownState = {
+        inputEl,
+        type,
+        filteredList: optionsWithMeta,
+        highlightedIndex: optionsWithMeta.length > 0 ? 0 : -1
+      };
+
+      renderDropdownOptions();
+      positionFloatingDropdown(inputEl);
+    }
+
+    function renderDropdownOptions() {
+      floatingDropdown.innerHTML = "";
+      const { filteredList, highlightedIndex, inputEl } = activeDropdownState;
+
+      if (!filteredList.length) {
+        const emptyDiv = document.createElement("div");
+        emptyDiv.className = "dropdown-empty";
+        emptyDiv.textContent = "No matching options";
+        floatingDropdown.appendChild(emptyDiv);
+        return;
+      }
+
+      filteredList.forEach((opt, idx) => {
+        const div = document.createElement("div");
+        div.className = "dropdown-option" + (idx === highlightedIndex ? " active" : "");
+
+        const labelSpan = document.createElement("span");
+        labelSpan.className = "dropdown-option-label";
+        labelSpan.textContent = opt.value;
+        div.appendChild(labelSpan);
+
+        if (opt.unitBadge) {
+          const badgeSpan = document.createElement("span");
+          badgeSpan.className = "dropdown-unit-badge";
+          badgeSpan.textContent = opt.unitBadge;
+          div.appendChild(badgeSpan);
+        }
+
+        div.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          selectDropdownOption(opt.value);
+          if (inputEl) focusPassive(inputEl);
+        });
+
+        floatingDropdown.appendChild(div);
+      });
+
+      const activeEl = floatingDropdown.querySelector(".dropdown-option.active");
+      if (activeEl) {
+        activeEl.scrollIntoView({ block: "nearest" });
+      }
+    }
+
+    function selectDropdownOption(value) {
+      const { inputEl } = activeDropdownState;
+      if (!inputEl) return;
+
+      inputEl.value = value;
+      inputEl.classList.remove("invalid");
+
+      const tr = inputEl.closest("tr");
+      const rowIndex = getRowIndex(tr);
+      const colIndex = Number(inputEl.dataset.col);
+
+      if (colIndex === 0) {
+        autoSetUnitForRow(tr, value);
+      }
+
+      if (CASCADE_COPY_INDICES.includes(colIndex)) {
+        cascadeCopyToSubsequentRows(rowIndex, colIndex, value);
+      }
+
+      closeDropdown();
+    }
+
+    function closeDropdown() {
+      floatingDropdown.classList.remove("open");
+      activeDropdownState.inputEl = null;
+      activeDropdownState.filteredList = [];
+      activeDropdownState.highlightedIndex = -1;
+    }
+
+    function moveToUnitColumn(currentTr) {
+      const inputs = getRowInputs(currentTr);
+      if (inputs[1]) {
+        focusPassive(inputs[1]);
+        openDropdownForInput(inputs[1], "unit");
+      }
+    }
+
+    function insertRowDirectlyIfValid(currentTr) {
+      if (!validateRowMandatory(currentTr)) {
+        return;
+      }
+
+      const defaults = getInheritedDefaultsFromLastRow();
+      const newTr = createRow(defaults);
+      const newInputs = getRowInputs(newTr);
+      focusPassive(newInputs[0]);
+    }
+
+    function handleCellKeyDown(e) {
+      const input = e.currentTarget;
+      const tr = input.closest("tr");
+      const rowIdx = getRowIndex(tr);
+      const colIdx = Number(input.dataset.col);
+      const rows = getAllRows();
+      const isDropdownOpen =
+        floatingDropdown.classList.contains("open") &&
+        activeDropdownState.inputEl === input;
+
+      if (isDropdownOpen) {
+        const list = activeDropdownState.filteredList;
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          if (list.length > 0) {
+            activeDropdownState.highlightedIndex =
+              (activeDropdownState.highlightedIndex + 1) % list.length;
+            renderDropdownOptions();
+            positionFloatingDropdown(input);
+          }
+          return;
+        }
+        if (e.key === "ArrowUp") {
+          e.preventDefault();
+          if (list.length > 0) {
+            activeDropdownState.highlightedIndex =
+              (activeDropdownState.highlightedIndex - 1 + list.length) % list.length;
+            renderDropdownOptions();
+            positionFloatingDropdown(input);
+          }
+          return;
+        }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          if (list.length > 0 && activeDropdownState.highlightedIndex >= 0) {
+            selectDropdownOption(list[activeDropdownState.highlightedIndex].value);
+          } else {
+            closeDropdown();
+          }
+          if (colIdx === 0) {
+            moveToUnitColumn(tr);
+          } else {
+            insertRowDirectlyIfValid(tr);
+          }
+          return;
+        }
+        if (e.key === "Escape") {
+          e.preventDefault();
+          closeDropdown();
+          return;
+        }
+      }
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        closeDropdown();
+        if (colIdx === 0) {
+          moveToUnitColumn(tr);
+        } else {
+          insertRowDirectlyIfValid(tr);
+        }
+        return;
+      }
+
+      if (e.key === "ArrowRight") {
+        const inputs = getRowInputs(tr);
+        if (colIdx < inputs.length - 1) {
+          e.preventDefault();
+          closeDropdown();
+          focusPassive(inputs[colIdx + 1]);
+        }
+        return;
+      }
+
+      if (e.key === "ArrowLeft") {
+        const inputs = getRowInputs(tr);
+        if (colIdx > 0) {
+          e.preventDefault();
+          closeDropdown();
+          focusPassive(inputs[colIdx - 1]);
+        }
+        return;
+      }
+
+      if (e.key === "ArrowDown") {
+        if (rowIdx < rows.length - 1) {
+          e.preventDefault();
+          closeDropdown();
+          const targetInputs = getRowInputs(rows[rowIdx + 1]);
+          focusPassive(targetInputs[colIdx]);
+        }
+        return;
+      }
+
+      if (e.key === "ArrowUp") {
+        if (rowIdx > 0) {
+          e.preventDefault();
+          closeDropdown();
+          const targetInputs = getRowInputs(rows[rowIdx - 1]);
+          focusPassive(targetInputs[colIdx]);
+        } else if (headerInputs.length > 0) {
+          e.preventDefault();
+          closeDropdown();
+          focusPassive(headerInputs[headerInputs.length - 1]);
+        }
+        return;
+      }
+    }
+
+    document.addEventListener("click", (e) => {
+      if (
+        !floatingDropdown.contains(e.target) &&
+        !e.target.closest('input[data-dropdown]')
+      ) {
+        closeDropdown();
+      }
+    });
+
+    window.addEventListener("scroll", () => {
+      if (floatingDropdown.classList.contains("open") && activeDropdownState.inputEl) {
+        positionFloatingDropdown(activeDropdownState.inputEl);
+      }
+    }, true);
+
+    window.addEventListener("resize", () => {
+      if (floatingDropdown.classList.contains("open") && activeDropdownState.inputEl) {
+        positionFloatingDropdown(activeDropdownState.inputEl);
+      }
+    });
+
+    document.getElementById("submitBtn").addEventListener("click", () => {
+      closeDropdown();
+      const rows = getAllRows();
+      for (const r of rows) {
+        if (!validateRowMandatory(r)) {
+          return;
+        }
+      }
+
+      const payload = {
+        header: {
+          received_date: document.getElementById("receivedDate").value,
+          project_name: document.getElementById("projectName").value.trim(),
+          gate_pass_no: document.getElementById("gatePassNo").value.trim(),
+          gate_pass_date: document.getElementById("gatePassDate").value,
+          ref_indent: document.getElementById("refIndent").value.trim(),
+          remarks: document.getElementById("headerRemarks").value.trim()
+        },
+        materials: rows.map((r, i) => {
+          const inp = getRowInputs(r);
+          return {
+            sl: i + 1,
+            item_name: inp[0].value.trim(),
+            unit: inp[1].value.trim(),
+            quantity: parseFloat(inp[2].value),
+            for_user: inp[3].value.trim(),
+            physical_identification: inp[4].value.trim(),
+            erp_trn_no: inp[5].value.trim(),
+            remarks: inp[6].value.trim()
+          };
+        })
+      };
+
+      jsonOutput.textContent = JSON.stringify(payload, null, 2);
+      jsonModal.classList.add("open");
+      showToast("Transfer Receive payload generated", "success");
+    });
+
+    document.getElementById("closeModalBtn").addEventListener("click", () => {
+      jsonModal.classList.remove("open");
+    });
+
+    jsonModal.addEventListener("click", (e) => {
+      if (e.target === jsonModal) {
+        jsonModal.classList.remove("open");
+      }
+    });
+
+    document.getElementById("copyJsonBtn").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(jsonOutput.textContent);
+        showToast("JSON copied to clipboard", "success");
+      } catch {
+        showToast("Could not copy automatically", "error");
+      }
+    });
+
+    createRow();
+  </script>
+</body>
+</html>
