@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -39,8 +39,9 @@
             background: #e9ecef;
             padding: 15px;
             border-radius: 6px;
-            margin-bottom: 15px;
-            width:50%;
+            margin: 0 auto 15px auto;
+            width: 65%;
+            min-width: 320px;
         }
         .header-group {
             position: relative;
@@ -63,6 +64,30 @@
         }
         .header-group input:focus { border-color: #007bff; outline: none; background-color: #eef5ff; }
 
+        .receiver-input-wrap {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .receiver-input-wrap input {
+            flex: 1;
+        }
+        .new-receiver-btn {
+            background-color: #0d6efd;
+            color: #fff;
+            border: none;
+            padding: 8px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background-color 0.2s;
+        }
+        .new-receiver-btn:hover {
+            background-color: #0b5ed7;
+        }
+
         .btn {
             padding: 8px 15px;
             border: none;
@@ -73,21 +98,37 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            font-weight: 600;
         }
-        .excel-upload-btn { background-color: #17a2b8; padding: 6px 12px; font-size: 13px; }
+        .eqp-add-btn { background-color: #6f42c1; padding: 8px 14px; font-size: 13px; }
+        .eqp-add-btn:hover { background-color: #59339d; }
+        .excel-upload-btn { background-color: #17a2b8; padding: 8px 14px; font-size: 13px; }
         .excel-upload-btn:hover { background-color: #138496; }
         .save-btn { background-color: #28a745; }
         .save-btn:hover { background-color: #218838; }
         .save-btn:disabled { background-color: #6c757d; cursor: not-allowed; }
 
-        /* ফর্ম ফুটার বা সাবমিট ও এক্সেল বাটন সেকশন */
-        .form-footer-section {
+        .table-toolbar {
             display: flex;
             justify-content: flex-end;
             align-items: center;
+            flex-wrap: wrap;
             gap: 10px;
             margin-top: 10px;
-            padding: 8px 5px;
+            margin-bottom: 10px;
+            padding: 8px 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+
+        .table-footer-submit {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 12px;
+            margin-bottom: 18px;
+            padding: 10px 12px;
             background: #f8f9fa;
             border-radius: 6px;
             border: 1px solid #e9ecef;
@@ -96,7 +137,7 @@
         .table-responsive {
             width: 100%;
             overflow: visible !important;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
         table { 
             width: 100%; 
@@ -113,10 +154,10 @@
         th { background-color: #007bff; color: white; font-size: 14px; }
         
         .col-sl { width: 4%; }
-        .col-item { width: 26%; }
+        .col-item { width: 25%; }
         .col-qty { width: 9%; }
         .col-unit { width: 9%; }
-        .col-eqp { width: 18%; }
+        .col-eqp { width: 19%; }
         .col-hr { width: 9%; }
         .col-erp { width: 9%; }
         .col-rem { width: 11%; }
@@ -129,6 +170,9 @@
             border: 1px solid #ccc;
             border-radius: 4px;
             font-size: 13px;
+        }
+        input.eqp-uppercase {
+            text-transform: uppercase;
         }
         input:focus { border-color: #007bff; outline: none; background-color: #eef5ff; }
         input.readonly-input { background-color: #e9ecef; cursor: not-allowed; font-weight: bold; }
@@ -158,6 +202,7 @@
             font-size: 13px;
             display: flex;
             justify-content: space-between;
+            align-items: center;
         }
         .suggestions-box li.active, .suggestions-box li:hover {
             background-color: #007bff;
@@ -170,9 +215,18 @@
             padding: 2px 6px;
             border-radius: 10px;
         }
-        .suggestions-box li.active .stock-tag {
+        .suggestions-box li.active .stock-tag,
+        .suggestions-box li:hover .stock-tag {
             background: #fff;
             color: #007bff;
+        }
+        .receiver-meta {
+            font-size: 11px;
+            color: #6c757d;
+        }
+        .suggestions-box li.active .receiver-meta,
+        .suggestions-box li:hover .receiver-meta {
+            color: #e2e8f0;
         }
         .delete-btn {
             background-color: #dc3545;
@@ -185,14 +239,14 @@
         }
         .delete-btn:hover { background-color: #c82333; }
 
-        /* কাস্টম সেন্টার পপআপ এবং ব্লার ব্যাকগ্রাউন্ড স্টাইল */
-        #customPopupOverlay {
+        /* Modal Overlays */
+        .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.45);
             backdrop-filter: blur(5px);
             display: none;
             justify-content: center;
@@ -204,67 +258,228 @@
             padding: 25px 30px;
             border-radius: 8px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.25);
-            max-width: 400px;
+            max-width: 420px;
             width: 90%;
             text-align: center;
             animation: popupScale 0.2s ease-in-out;
         }
         @keyframes popupScale {
-            from { transform: scale(0.8); opacity: 0; }
+            from { transform: scale(0.85); opacity: 0; }
             to { transform: scale(1); opacity: 1; }
         }
         .custom-popup-box h3 { margin-top: 0; color: #28a745; font-size: 20px; }
-        .custom-popup-box p { font-size: 14px; color: #555; margin: 15px 0 20px 0; white-space: pre-line; }
+        .custom-popup-box p { font-size: 14px; color: #555; margin: 12px 0 18px 0; white-space: pre-line; }
+        .issue-no-badge {
+            display: none;
+            background: #f1f5f9;
+            border: 2px dashed #28a745;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 12px 0 18px 0;
+        }
+        .issue-no-badge span.lbl {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #64748b;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .issue-no-badge span.val {
+            font-size: 26px;
+            font-weight: 800;
+            color: #16a34a;
+            font-family: monospace;
+            letter-spacing: 2px;
+        }
         .custom-popup-btn {
             background-color: #007bff;
             color: white;
             border: none;
-            padding: 8px 20px;
+            padding: 8px 24px;
             font-size: 14px;
             border-radius: 4px;
             cursor: pointer;
+            font-weight: 600;
         }
         .custom-popup-btn:hover { background-color: #0056b3; }
-       #back{right:0; font-weight:bold; font-size:35px; color:red;}
+
+        /* Form Modals (Receiver & Equipment) */
+        .form-modal-box {
+            background: #fff;
+            padding: 24px 28px;
+            border-radius: 8px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+            max-width: 400px;
+            width: 92%;
+            text-align: left;
+            animation: popupScale 0.2s ease-in-out;
+        }
+        .form-modal-box h3 {
+            margin: 0 0 16px 0;
+            color: #1e293b;
+            font-size: 18px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+        .modal-field {
+            margin-bottom: 12px;
+        }
+        .modal-field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 4px;
+        }
+        .modal-field input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 18px;
+        }
+        .btn-cancel {
+            background-color: #64748b;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .btn-cancel:hover { background-color: #475569; }
+        .btn-modal-save {
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .btn-modal-save:hover { background-color: #218838; }
+        .btn-modal-save:disabled { background-color: #94a3b8; cursor: not-allowed; }
+
+        #back {
+            display: inline-block;
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 16px;
+            color: #fff;
+            background-color: #2563eb;
+            padding: 10px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+        }
+        #back:hover { background-color: #1d4ed8; }
     </style>
 </head>
 <body>
 
-<!-- কাস্টম সেন্টার পপআপ মডাল -->
-<div id="customPopupOverlay">
+<!-- Custom Alert/Success Popup Modal -->
+<div id="customPopupOverlay" class="modal-overlay">
     <div class="custom-popup-box">
-        <h3 id="popupTitle">সফল!</h3>
-        <p id="popupMessage">মেসেজ এখানে আসবে...</p>
-        <button class="custom-popup-btn" onclick="closeCustomPopup()">OK</button>
+        <h3 id="popupTitle">Success</h3>
+        <p id="popupMessage">Message goes here...</p>
+        <div id="issueNoBadge" class="issue-no-badge">
+            <span class="lbl">Issue Posting No</span>
+            <span id="popupIssueNo" class="val">ISS-00001</span>
+        </div>
+        <button type="button" class="custom-popup-btn" onclick="closeCustomPopup()">OK</button>
+    </div>
+</div>
+
+<!-- New Receiver Modal -->
+<div id="newReceiverModal" class="modal-overlay">
+    <div class="form-modal-box">
+        <h3>Add New Receiver</h3>
+        <form id="newReceiverForm" onsubmit="saveNewReceiver(event)">
+            <div class="modal-field">
+                <label for="recNameInput">Name <span style="color: red;">*</span></label>
+                <input type="text" id="recNameInput" required autocomplete="off">
+            </div>
+            <div class="modal-field">
+                <label for="recDesignationInput">Designation <span style="color: red;">*</span></label>
+                <input type="text" id="recDesignationInput" required autocomplete="off">
+            </div>
+            <div class="modal-field">
+                <label for="recPhoneInput">Phone Number <span style="color: red;">*</span></label>
+                <input type="tel" id="recPhoneInput" required autocomplete="off">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeNewReceiverModal()">Cancel</button>
+                <button type="submit" class="btn-modal-save" id="saveReceiverBtn">Save Receiver</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- New Equipment Modal -->
+<div id="newEquipmentModal" class="modal-overlay">
+    <div class="form-modal-box">
+        <h3>Add New Equipment</h3>
+        <form id="newEquipmentForm" onsubmit="saveNewEquipment(event)">
+            <div class="modal-field">
+                <label for="eqpCodeInput">Equipment Number <span style="color: red;">*</span></label>
+                <input type="text" id="eqpCodeInput" class="eqp-uppercase" required autocomplete="off">
+            </div>
+            <div class="modal-field">
+                <label for="eqpNameInput">Equipment Name <span style="color: red;">*</span></label>
+                <input type="text" id="eqpNameInput" class="eqp-uppercase" required autocomplete="off">
+            </div>
+            <div class="modal-field">
+                <label for="eqpModelInput">Model <span style="color: red;">*</span></label>
+                <input type="text" id="eqpModelInput" class="eqp-uppercase" required autocomplete="off">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeNewEquipmentModal()">Cancel</button>
+                <button type="submit" class="btn-modal-save" id="saveEquipmentBtn">Save Equipment</button>
+            </div>
+        </form>
     </div>
 </div>
 
 <div class="container" id="mainContainer">
     <h2>Stock_Issue</h2>
-    <!-- মূল হেডার ইনফরমেশন -->
+
+    <!-- Header Information -->
     <div class="header-section" id="headerSection">
         <div class="header-group">
             <label for="entryDate">Date:</label>
             <input type="date" id="entryDate" class="header-input">
-        </div></br>
+        </div>
         <div class="header-group">
             <label for="entryIndent">Indent:</label>
-            <input type="text" id="entryIndent" class="header-input" placeholder="Indent No...">
-        </div></br>
+            <input type="text" id="entryIndent" class="header-input">
+        </div>
         <div class="header-group" style="position: relative;">
-            <label for="entryReceiver">গ্রহীতা (Receiver):</label>
-            <input type="text" id="entryReceiver" class="header-input" placeholder="Receiver Name..." autocomplete="off">
+            <label for="entryReceiver">Receiver:</label>
+            <div class="receiver-input-wrap">
+                <input type="text" id="entryReceiver" class="header-input" autocomplete="off">
+                <button type="button" class="new-receiver-btn" onclick="openNewReceiverModal()">+ New Receiver</button>
+            </div>
             <ul class="suggestions-box" id="receiverSuggestions"></ul>
         </div>
     </div>
 
-    <!-- ফর্ম ফুটার বা সাবমিট ও এক্সেল বাটন সেকশন (একই লাইনে ডানে বিন্যস্ত) -->
-    <div class="form-footer-section">
-        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
-        <button class="btn excel-upload-btn" onclick="document.getElementById('excelFileInput').click()">
-            📂 Excel Load
+    <!-- Top Table Toolbar -->
+    <div class="table-toolbar">
+        <button type="button" class="btn eqp-add-btn" onclick="openNewEquipmentModal()">
+            + New Equipment
         </button>
-        <button class="btn save-btn" id="saveBtn" style="padding: 10px 22px; font-size: 15px;">Submit</button>
+        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
+        <button type="button" class="btn excel-upload-btn" onclick="document.getElementById('excelFileInput').click()">
+            Excel Load
+        </button>
     </div>
 
     <div class="table-responsive">
@@ -283,13 +498,18 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- ডাইনামিক রো -->
+                <!-- Dynamic Rows -->
             </tbody>
         </table>
     </div>
-    <!---Back to home---->
- <a href="index.html" class="flex items-center gap-3 px-4 py-2.5 rounded bg-blue-600 text-white font-medium" id="back">
-                <i class="fa-solid fa-chart-pie w-5"></i> Back</a>
+
+    <!-- Bottom Submit Button Below Table -->
+    <div class="table-footer-submit">
+        <button type="button" class="btn save-btn" id="saveBtn" style="padding: 10px 26px; font-size: 15px;">Submit</button>
+    </div>
+
+    <!-- Back to home -->
+    <a href="index.html" id="back">Back</a>
 </div>
 
 <script>
@@ -306,32 +526,101 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const analytics = firebase.analytics();
+    let analytics = null;
+    try {
+        analytics = firebase.analytics();
+    } catch (e) {
+        console.warn("Analytics not available in this environment:", e);
+    }
 
     let productDatabase = [];
-
-    const receiverDatabase = [
-        "Md. Rahim Uddin",
-        "Engr. Tanvir Ahmed",
-        "Kamal Hossain",
-        "Sohanur Rahman",
-        "General Workshop Supervisor"
-    ];
-
-    const equipmentDatabase = [
-        { code: "BP-888", name: "BP-888 Vehicle" },
-        { code: "EX-802", name: "SDLG-LG6210E-Dalian Deutz" },
-        { code: "DT-054", name: "HINO-FS4FKC-HINO-F21C" },
-        { code: "Workshop", name: "General Workshop" }
-    ];
+    let receiverDatabase = [];
+    let equipmentDatabase = [];
 
     const tbody = document.querySelector('#inventoryTable tbody');
     document.getElementById('entryDate').valueAsDate = new Date();
 
-    function showCustomPopup(title, message, isSuccess = true) {
+    function toUpperClean(val) {
+        return val ? val.toString().toUpperCase() : "";
+    }
+
+    function formatEquipmentLabel(eq) {
+        const code = toUpperClean(eq.code).trim();
+        const name = toUpperClean(eq.name).trim();
+        const model = toUpperClean(eq.model).trim();
+        const parts = [name];
+        if (model) parts.push(model);
+        return `${code} (${parts.join(' - ')})`;
+    }
+
+    function validateAgainstDatabase(rawValue, type) {
+        const cleaned = (rawValue || "").trim();
+        if (!cleaned) {
+            return { valid: false, value: "", record: null };
+        }
+
+        if (type === "receiver") {
+            const matched = receiverDatabase.find(
+                r => r.name.trim().toLowerCase() === cleaned.toLowerCase()
+            );
+            if (matched) {
+                return { valid: true, value: matched.name.trim(), record: matched };
+            }
+            return { valid: false, value: cleaned, record: null };
+        }
+
+        if (type === "equipment") {
+            const upperCleaned = toUpperClean(cleaned).trim();
+            const matched = equipmentDatabase.find(eq => {
+                const fullLabel = formatEquipmentLabel(eq).trim();
+                const codeOnly = toUpperClean(eq.code).trim();
+                return fullLabel === upperCleaned || codeOnly === upperCleaned;
+            });
+            if (matched) {
+                return { valid: true, value: formatEquipmentLabel(matched), record: matched };
+            }
+            return { valid: false, value: upperCleaned, record: null };
+        }
+
+        return { valid: false, value: cleaned, record: null };
+    }
+
+    // Clear input value if it is not in receiver_list or equipment_list
+    function clearIfUnlisted(inputEl, type) {
+        if (!inputEl) return false;
+        const currentVal = inputEl.value.trim();
+        if (!currentVal) {
+            inputEl.classList.remove('invalid');
+            return false;
+        }
+        const check = validateAgainstDatabase(currentVal, type);
+        if (!check.valid) {
+            inputEl.value = "";
+            inputEl.classList.remove('invalid');
+            return true;
+        }
+        inputEl.value = check.value;
+        inputEl.classList.remove('invalid');
+        return false;
+    }
+
+    function isArrowOrEnterKey(key) {
+        return key === 'Enter' || key === 'ArrowLeft' || key === 'ArrowRight' || key === 'ArrowUp' || key === 'ArrowDown';
+    }
+
+    function showCustomPopup(title, message, isSuccess = true, issueNo = "") {
         document.getElementById('popupTitle').textContent = title;
         document.getElementById('popupTitle').style.color = isSuccess ? '#28a745' : '#dc3545';
         document.getElementById('popupMessage').textContent = message;
+
+        const badge = document.getElementById('issueNoBadge');
+        if (issueNo) {
+            document.getElementById('popupIssueNo').textContent = issueNo;
+            badge.style.display = 'block';
+        } else {
+            badge.style.display = 'none';
+        }
+
         document.getElementById('customPopupOverlay').style.display = 'flex';
     }
 
@@ -339,8 +628,166 @@
         document.getElementById('customPopupOverlay').style.display = 'none';
     }
 
+    document.addEventListener('input', function(e) {
+        if (e.target && e.target.classList.contains('eqp-uppercase')) {
+            const start = e.target.selectionStart;
+            const end = e.target.selectionEnd;
+            e.target.value = toUpperClean(e.target.value);
+            if (typeof start === 'number' && typeof end === 'number') {
+                e.target.setSelectionRange(start, end);
+            }
+        }
+    });
+
+    function openNewReceiverModal() {
+        document.getElementById('newReceiverForm').reset();
+        document.getElementById('newReceiverModal').style.display = 'flex';
+        setTimeout(() => {
+            document.getElementById('recNameInput').focus();
+        }, 50);
+    }
+
+    function closeNewReceiverModal() {
+        document.getElementById('newReceiverModal').style.display = 'none';
+    }
+
+    async function saveNewReceiver(e) {
+        e.preventDefault();
+        const name = document.getElementById('recNameInput').value.trim();
+        const designation = document.getElementById('recDesignationInput').value.trim();
+        const phone = document.getElementById('recPhoneInput').value.trim();
+
+        if (!name || !designation || !phone) {
+            showCustomPopup("Validation Error", "Please enter Name, Designation, and Phone Number!", false);
+            return;
+        }
+
+        const saveRecBtn = document.getElementById('saveReceiverBtn');
+        saveRecBtn.disabled = true;
+        saveRecBtn.textContent = "Saving...";
+
+        try {
+            const receiverPayload = {
+                name: name,
+                designation: designation,
+                phone: phone,
+                createdAt: new Date().toISOString()
+            };
+
+            await db.ref('receiver_list').push(receiverPayload);
+
+            document.getElementById('entryReceiver').value = name;
+            document.getElementById('entryReceiver').classList.remove('invalid');
+            document.getElementById('receiverSuggestions').innerHTML = '';
+
+            closeNewReceiverModal();
+            showCustomPopup("Success", `New receiver "${name}" saved to receiver_list!`);
+        } catch (err) {
+            console.error("Error saving receiver:", err);
+            showCustomPopup("Error", "Failed to save receiver: " + err.message, false);
+        } finally {
+            saveRecBtn.disabled = false;
+            saveRecBtn.textContent = "Save Receiver";
+        }
+    }
+
+    function openNewEquipmentModal() {
+        document.getElementById('newEquipmentForm').reset();
+        document.getElementById('newEquipmentModal').style.display = 'flex';
+        setTimeout(() => {
+            document.getElementById('eqpCodeInput').focus();
+        }, 50);
+    }
+
+    function closeNewEquipmentModal() {
+        document.getElementById('newEquipmentModal').style.display = 'none';
+    }
+
+    async function saveNewEquipment(e) {
+        e.preventDefault();
+        const code = toUpperClean(document.getElementById('eqpCodeInput').value).trim();
+        const name = toUpperClean(document.getElementById('eqpNameInput').value).trim();
+        const model = toUpperClean(document.getElementById('eqpModelInput').value).trim();
+
+        if (!code || !name || !model) {
+            showCustomPopup("Validation Error", "Please enter Equipment Number, Name, and Model!", false);
+            return;
+        }
+
+        const saveEqpBtn = document.getElementById('saveEquipmentBtn');
+        saveEqpBtn.disabled = true;
+        saveEqpBtn.textContent = "Saving...";
+
+        try {
+            const eqpPayload = {
+                code: code,
+                name: name,
+                model: model,
+                createdAt: new Date().toISOString()
+            };
+
+            await db.ref('equipment_list').push(eqpPayload);
+
+            closeNewEquipmentModal();
+            showCustomPopup("Success", `Equipment "${formatEquipmentLabel(eqpPayload)}" saved to equipment_list!`);
+        } catch (err) {
+            console.error("Error saving equipment:", err);
+            showCustomPopup("Error", "Failed to save equipment: " + err.message, false);
+        } finally {
+            saveEqpBtn.disabled = false;
+            saveEqpBtn.textContent = "Save Equipment";
+        }
+    }
+
+    function listenToReceiverList() {
+        db.ref('receiver_list').on('value', (snapshot) => {
+            const data = snapshot.val();
+            const map = new Map();
+
+            if (data) {
+                Object.values(data).forEach(rec => {
+                    if (rec && rec.name) {
+                        const cleanName = rec.name.trim();
+                        map.set(cleanName.toLowerCase(), {
+                            name: cleanName,
+                            designation: rec.designation ? rec.designation.trim() : "",
+                            phone: rec.phone ? rec.phone.trim() : ""
+                        });
+                    }
+                });
+            }
+
+            receiverDatabase = Array.from(map.values());
+        });
+    }
+
+    function listenToEquipmentList() {
+        db.ref('equipment_list').on('value', (snapshot) => {
+            const data = snapshot.val();
+            const map = new Map();
+
+            if (data) {
+                Object.values(data).forEach(eq => {
+                    if (eq && eq.code && eq.name) {
+                        const cleanCode = toUpperClean(eq.code).trim();
+                        const cleanName = toUpperClean(eq.name).trim();
+                        const cleanModel = toUpperClean(eq.model).trim();
+                        const key = `${cleanCode}|${cleanName}|${cleanModel}`;
+                        map.set(key, {
+                            code: cleanCode,
+                            name: cleanName,
+                            model: cleanModel
+                        });
+                    }
+                });
+            }
+
+            equipmentDatabase = Array.from(map.values());
+        });
+    }
+
     function formatStockValue(val) {
-        let num = parseFloat(val);
+        const num = parseFloat(val);
         if (isNaN(num)) return "0";
         return Number.isInteger(num) ? num.toString() : num.toFixed(2);
     }
@@ -353,7 +800,7 @@
                 if (data) {
                     Object.entries(data).forEach(([key, item]) => {
                         const stockVal = parseFloat(item.stock) || 0;
-                        if (item.name && stockVal > 0) {
+                        if (item && item.name && stockVal > 0) {
                             productDatabase.push({
                                 firebaseKey: key,
                                 name: item.name.toString().trim(),
@@ -365,11 +812,34 @@
                 }
             })
             .catch((error) => {
-                console.error("স্টক লোড করতে সমস্যা হয়েছে:", error);
+                console.error("Error loading stock:", error);
             });
     }
 
-    window.addEventListener('DOMContentLoaded', fetchAvailableStock);
+    window.addEventListener('DOMContentLoaded', () => {
+        fetchAvailableStock();
+        listenToReceiverList();
+        listenToEquipmentList();
+    });
+
+    async function generate5DigitIssueNo() {
+        let nextNum = 1;
+        try {
+            const snap = await db.ref('stock_issue').limitToLast(1).once('value');
+            if (snap.exists()) {
+                const data = snap.val();
+                const lastKey = Object.keys(data)[0];
+                const lastIssueNo = data[lastKey].issueNo || '';
+                const match = lastIssueNo.match(/\d+/);
+                if (match) {
+                    nextNum = parseInt(match[0], 10) + 1;
+                }
+            }
+        } catch (e) {
+            console.warn("Issue No fetch error, fallback sequence used:", e);
+        }
+        return 'ISS-' + String(nextNum).padStart(5, '0');
+    }
 
     const headerInputs = Array.from(document.querySelectorAll('.header-input'));
     const receiverInput = document.getElementById('entryReceiver');
@@ -379,7 +849,7 @@
         inp.addEventListener('keydown', function(e) {
             const hasSuggestions = receiverSuggestions.children.length > 0;
 
-            if (hasSuggestions && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+            if (inp === receiverInput && hasSuggestions && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
                 const items = Array.from(receiverSuggestions.querySelectorAll('li'));
                 let activeIndex = items.findIndex(item => item.classList.contains('active'));
 
@@ -400,16 +870,22 @@
                 }
             }
 
-            if (hasSuggestions && e.key === 'Enter') {
+            if (inp === receiverInput && hasSuggestions && e.key === 'Enter') {
                 const activeItem = receiverSuggestions.querySelector('li.active');
                 if (activeItem) {
                     e.preventDefault();
-                    receiverInput.value = activeItem.textContent;
+                    receiverInput.value = activeItem.getAttribute('data-name') || activeItem.textContent;
+                    receiverInput.classList.remove('invalid');
                     receiverSuggestions.innerHTML = '';
                     const firstRowInput = tbody.querySelector('.item-input');
                     if (firstRowInput) firstRowInput.focus();
                     return;
                 }
+            }
+
+            if (inp === receiverInput && isArrowOrEnterKey(e.key)) {
+                receiverSuggestions.innerHTML = '';
+                clearIfUnlisted(receiverInput, "receiver");
             }
 
             if (e.key === 'ArrowRight' || e.key === 'Enter') {
@@ -431,40 +907,43 @@
         });
     });
 
-    receiverInput.addEventListener('input', function() {
-        const query = this.value.trim().toLowerCase();
+    function renderReceiverSuggestions(query) {
         receiverSuggestions.innerHTML = '';
-        if (!query) return;
+        const matches = receiverDatabase.filter(r =>
+            r.name.toLowerCase().includes(query) ||
+            (r.designation && r.designation.toLowerCase().includes(query)) ||
+            (r.phone && r.phone.toLowerCase().includes(query))
+        );
 
-        const matches = receiverDatabase.filter(r => r.toLowerCase().includes(query));
-        matches.forEach((name, idx) => {
+        matches.forEach((rec, idx) => {
             const li = document.createElement('li');
-            li.textContent = name;
+            li.setAttribute('data-name', rec.name);
+
+            const metaParts = [];
+            if (rec.designation) metaParts.push(rec.designation);
+            if (rec.phone) metaParts.push(rec.phone);
+            const metaText = metaParts.length > 0 ? `<span class="receiver-meta">${metaParts.join(' • ')}</span>` : '';
+
+            li.innerHTML = `<span><strong>${rec.name}</strong></span> ${metaText}`;
             if (idx === 0) li.classList.add('active');
+
             li.onmousedown = (ev) => {
                 ev.preventDefault();
-                receiverInput.value = name;
+                receiverInput.value = rec.name;
+                receiverInput.classList.remove('invalid');
                 receiverSuggestions.innerHTML = '';
             };
             receiverSuggestions.appendChild(li);
         });
+    }
+
+    receiverInput.addEventListener('input', function() {
+        this.classList.remove('invalid');
+        renderReceiverSuggestions(this.value.trim().toLowerCase());
     });
 
     receiverInput.addEventListener('focus', function() {
-        const query = this.value.trim().toLowerCase();
-        receiverSuggestions.innerHTML = '';
-        const matches = receiverDatabase.filter(r => r.toLowerCase().includes(query));
-        matches.forEach((name, idx) => {
-            const li = document.createElement('li');
-            li.textContent = name;
-            if (idx === 0) li.classList.add('active');
-            li.onmousedown = (ev) => {
-                ev.preventDefault();
-                receiverInput.value = name;
-                receiverSuggestions.innerHTML = '';
-            };
-            receiverSuggestions.appendChild(li);
-        });
+        renderReceiverSuggestions(this.value.trim().toLowerCase());
     });
 
     function updateSerialNumbers() {
@@ -476,36 +955,36 @@
 
     function addNewRow(initialData = {}) {
         let defaultUnit = initialData.unit || "";
-        let defaultEqp = initialData.equipment || "";
+        let defaultEqp = toUpperClean(initialData.equipment || "");
         let defaultHr = initialData.hr || "";
         let defaultErp = initialData.erp || "";
 
         const rows = tbody.querySelectorAll('tr');
         if (!initialData.unit && rows.length > 0) {
             const lastRow = rows[rows.length - 1];
-            defaultEqp = lastRow.querySelector('.eqp-input').value;
+            defaultEqp = toUpperClean(lastRow.querySelector('.eqp-input').value);
             defaultHr = lastRow.querySelector('.hr-input').value;
-            defaultErp = lastRow.querySelector('.erp-input').value; // অটো কপি ফিচার
+            defaultErp = lastRow.querySelector('.erp-input').value;
         }
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td class="sl-no"></td>
             <td style="position: relative;">
-                <input type="text" class="item-input" placeholder="Search item..." autocomplete="off" value="${initialData.item || ''}">
+                <input type="text" class="item-input" autocomplete="off" value="${initialData.item || ''}">
                 <ul class="suggestions-box item-suggestions"></ul>
             </td>
-            <td><input type="number" step="any" class="qty-input" placeholder="0" value="${initialData.qty || ''}"></td>
+            <td><input type="number" step="any" min="0" class="qty-input" value="${initialData.qty || ''}"></td>
             <td>
-                <input type="text" class="unit-input readonly-input" placeholder="Unit" readonly tabindex="-1" value="${defaultUnit}">
+                <input type="text" class="unit-input readonly-input" readonly tabindex="-1" value="${defaultUnit}">
             </td>
             <td style="position: relative;">
-                <input type="text" class="eqp-input" placeholder="Equipment..." autocomplete="off" value="${defaultEqp}">
+                <input type="text" class="eqp-input eqp-uppercase" autocomplete="off" value="${defaultEqp}">
                 <ul class="suggestions-box eqp-suggestions"></ul>
             </td>
-            <td><input type="text" class="hr-input" placeholder="Hr meter..." value="${defaultHr}"></td>
-            <td><input type="text" class="erp-input" placeholder="ERP Issue..." value="${defaultErp}"></td>
-            <td><input type="text" class="rem-input" placeholder="Remarks..." value="${initialData.remarks || ''}"></td>
+            <td><input type="text" class="hr-input" value="${defaultHr}"></td>
+            <td><input type="text" class="erp-input" value="${defaultErp}"></td>
+            <td><input type="text" class="rem-input" value="${initialData.remarks || ''}"></td>
             <td><button type="button" class="delete-btn">Delete</button></td>
         `;
         tbody.appendChild(tr);
@@ -518,6 +997,11 @@
     tbody.addEventListener('input', function(e) {
         const target = e.target;
         target.classList.remove('invalid');
+
+        if (target.classList.contains('eqp-input')) {
+            target.value = toUpperClean(target.value);
+        }
+
         const query = target.value.trim().toLowerCase();
         const cell = target.closest('td');
         const suggestionsBox = cell ? cell.querySelector('.suggestions-box') : null;
@@ -531,10 +1015,10 @@
             matches.forEach((item, idx) => {
                 const li = document.createElement('li');
                 const displayStock = formatStockValue(item.stock);
-                
+
                 li.innerHTML = `<span>${item.name} <b>[${item.unit}]</b></span> <span class="stock-tag">Stock: ${displayStock} ${item.unit}</span>`;
                 if (idx === 0) li.classList.add('active');
-                
+
                 li.onmousedown = (ev) => {
                     ev.preventDefault();
                     target.value = item.name;
@@ -546,14 +1030,20 @@
                 suggestionsBox.appendChild(li);
             });
         } else if (target.classList.contains('eqp-input')) {
-            const matches = equipmentDatabase.filter(eq => eq.code.toLowerCase().includes(query) || eq.name.toLowerCase().includes(query));
+            const matches = equipmentDatabase.filter(eq =>
+                eq.code.toLowerCase().includes(query) ||
+                eq.name.toLowerCase().includes(query) ||
+                (eq.model && eq.model.toLowerCase().includes(query))
+            );
             matches.forEach((eq, idx) => {
+                const labelText = formatEquipmentLabel(eq);
                 const li = document.createElement('li');
-                li.textContent = `${eq.code} (${eq.name})`;
+                li.textContent = labelText;
                 if (idx === 0) li.classList.add('active');
                 li.onmousedown = (ev) => {
                     ev.preventDefault();
-                    target.value = `${eq.code} (${eq.name})`;
+                    target.value = labelText;
+                    target.classList.remove('invalid');
                     suggestionsBox.innerHTML = '';
                 };
                 suggestionsBox.appendChild(li);
@@ -561,17 +1051,20 @@
         }
     });
 
-    // 🟢 ফোকাস আউট হলে ভুল বা অবাঞ্ছিত লেটারযুক্ত ইনপুট স্বয়ংক্রিয়ভাবে খালি করার ভ্যালিডেশন
     tbody.addEventListener('focusout', function(e) {
         const target = e.target;
         setTimeout(() => {
             if (target.classList.contains('item-input')) {
                 const enteredVal = target.value.trim();
                 const row = target.closest('tr');
+                if (!row) return;
                 const unitVal = row.querySelector('.unit-input').value.trim();
-                
+
                 if (enteredVal !== "") {
-                    const isValid = productDatabase.some(p => p.name.toLowerCase() === enteredVal.toLowerCase() && p.unit.toLowerCase() === unitVal.toLowerCase());
+                    const isValid = productDatabase.some(p =>
+                        p.name.toLowerCase() === enteredVal.toLowerCase() &&
+                        p.unit.toLowerCase() === unitVal.toLowerCase()
+                    );
                     if (!isValid) {
                         target.value = "";
                         row.querySelector('.unit-input').value = "";
@@ -582,13 +1075,26 @@
                     row.querySelector('.qty-input').removeAttribute('max');
                 }
             } else if (target.classList.contains('eqp-input')) {
-                const enteredVal = target.value.trim();
-                if (enteredVal !== "") {
-                    const isValidEqp = equipmentDatabase.some(eq => `${eq.code} (${eq.name})`.toLowerCase() === enteredVal.toLowerCase() || eq.code.toLowerCase() === enteredVal.toLowerCase());
-                    if (!isValidEqp) {
-                        target.value = "";
-                    }
+                target.value = toUpperClean(target.value);
+                const check = validateAgainstDatabase(target.value, "equipment");
+                if (target.value.trim() !== "" && !check.valid) {
+                    target.classList.add('invalid');
+                } else {
+                    target.classList.remove('invalid');
+                    if (check.valid) target.value = check.value;
                 }
+            }
+        }, 200);
+    });
+
+    receiverInput.addEventListener('blur', function() {
+        setTimeout(() => {
+            const check = validateAgainstDatabase(receiverInput.value, "receiver");
+            if (receiverInput.value.trim() !== "" && !check.valid) {
+                receiverInput.classList.add('invalid');
+            } else {
+                receiverInput.classList.remove('invalid');
+                if (check.valid) receiverInput.value = check.value;
             }
         }, 200);
     });
@@ -603,7 +1109,7 @@
         const rowIndex = allRows.indexOf(currentRow);
         const rowInputs = Array.from(currentRow.querySelectorAll('input'));
         const colIndex = rowInputs.indexOf(currentInput);
-        
+
         const suggestionsBox = cell ? cell.querySelector('.suggestions-box') : null;
         const hasSuggestions = suggestionsBox && suggestionsBox.children.length > 0;
 
@@ -633,7 +1139,7 @@
             if (activeItem) {
                 e.preventDefault();
                 const fullText = activeItem.querySelector('span') ? activeItem.querySelector('span').textContent : activeItem.textContent;
-                
+
                 if (currentInput.classList.contains('item-input')) {
                     const matchParts = fullText.match(/^(.*?)\s*\[(.*?)\]$/);
                     if (matchParts) {
@@ -642,19 +1148,29 @@
                         currentInput.value = itemName;
                         currentRow.querySelector('.unit-input').value = itemUnit;
 
-                        const foundItem = productDatabase.find(p => p.name.toLowerCase() === itemName.toLowerCase() && p.unit.toLowerCase() === itemUnit.toLowerCase());
+                        const foundItem = productDatabase.find(p =>
+                            p.name.toLowerCase() === itemName.toLowerCase() &&
+                            p.unit.toLowerCase() === itemUnit.toLowerCase()
+                        );
                         if (foundItem) {
                             currentRow.querySelector('.qty-input').setAttribute('max', foundItem.stock);
                         }
                     }
                 } else if (currentInput.classList.contains('eqp-input')) {
-                    currentInput.value = fullText;
+                    currentInput.value = toUpperClean(fullText);
+                    currentInput.classList.remove('invalid');
                 }
-                
+
                 suggestionsBox.innerHTML = '';
                 focusNextInput(currentInput);
                 return;
             }
+        }
+
+        // Clear unlisted Equipment value on Enter or Arrow keys
+        if (currentInput.classList.contains('eqp-input') && isArrowOrEnterKey(e.key)) {
+            if (suggestionsBox) suggestionsBox.innerHTML = '';
+            clearIfUnlisted(currentInput, "equipment");
         }
 
         if (!hasSuggestions && e.key === 'ArrowDown') {
@@ -682,7 +1198,7 @@
                 if (nextInp.classList.contains('readonly-input')) {
                     nextInp = rowInputs[colIndex + 2];
                 }
-                if(nextInp) { nextInp.focus(); nextInp.select(); }
+                if (nextInp) { nextInp.focus(); nextInp.select(); }
             }
             return;
         }
@@ -694,7 +1210,7 @@
                 if (prevInp.classList.contains('readonly-input')) {
                     prevInp = rowInputs[colIndex - 2];
                 }
-                if(prevInp) { prevInp.focus(); prevInp.select(); }
+                if (prevInp) { prevInp.focus(); prevInp.select(); }
             } else if (rowIndex === 0) {
                 document.getElementById('entryReceiver').focus();
             }
@@ -715,7 +1231,7 @@
         const itemVal = currentRow.querySelector('.item-input').value.trim();
         const qtyVal = currentRow.querySelector('.qty-input').value.trim();
         const unitVal = currentRow.querySelector('.unit-input').value.trim();
-        const eqpVal = currentRow.querySelector('.eqp-input').value.trim();
+        const eqpVal = toUpperClean(currentRow.querySelector('.eqp-input').value).trim();
         const hrVal = currentRow.querySelector('.hr-input').value.trim();
 
         if (currentInput.classList.contains('qty-input')) {
@@ -728,7 +1244,7 @@
 
         if (currentIndex === inputs.length - 1) {
             if (!itemVal || !qtyVal || !unitVal || !eqpVal || !hrVal) {
-                showCustomPopup("সতর্কতা", "দয়া করে Item, Quanty, Unit, Equipment এবং Hr meter পূরণ করুন!", false);
+                showCustomPopup("Warning", "Please fill in Item, Quanty, Unit, Equipment, and Hr meter!", false);
                 if (!itemVal) currentRow.querySelector('.item-input').classList.add('invalid');
                 if (!qtyVal) currentRow.querySelector('.qty-input').classList.add('invalid');
                 if (!eqpVal) currentRow.querySelector('.eqp-input').classList.add('invalid');
@@ -763,7 +1279,7 @@
                 row.remove();
                 updateSerialNumbers();
             } else {
-                showCustomPopup("সতর্কতা", "কমপক্ষে একটি রো থাকা আবশ্যক!", false);
+                showCustomPopup("Warning", "At least one row is required!", false);
             }
         }
     });
@@ -781,203 +1297,236 @@
                 const worksheet = workbook.Sheets[firstSheetName];
                 const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-                if (sheetData.length === 0) {
-                    showCustomPopup("সতর্কতা", "ফাইলে কোনো ডাটা পাওয়া যায়নি!", false);
+                if (!sheetData || sheetData.length === 0) {
+                    showCustomPopup("Warning", "No data found in the Excel file!", false);
                     return;
                 }
 
-                const fileHeaders = sheetData[0];
+                const fileHeaders = sheetData[0].map(h => h ? h.toString().trim() : "");
                 const requiredHeaders = ["Item", "Quanty", "Unit", "Equipment", "Hr meter", "Remarks"];
                 const missingHeaders = requiredHeaders.filter(h => !fileHeaders.includes(h));
 
                 if (missingHeaders.length > 0) {
-                    showCustomPopup("সতর্কতা", `কলাম হেডার ১০০% মেলেনি!\nঅনুপস্থিত: ${missingHeaders.join(', ')}`, false);
-                    e.target.value = '';
+                    showCustomPopup("Missing Columns", `Missing required columns: ${missingHeaders.join(", ")}`, false);
                     return;
                 }
 
-                const jsonData = XLSX.utils.sheet_to_json(worksheet);
-                const existingRows = tbody.querySelectorAll('tr');
-                if (existingRows.length === 1 && !existingRows[0].querySelector('.item-input').value) {
-                    existingRows[0].remove();
+                const idxItem = fileHeaders.indexOf("Item");
+                const idxQty = fileHeaders.indexOf("Quanty");
+                const idxUnit = fileHeaders.indexOf("Unit");
+                const idxEqp = fileHeaders.indexOf("Equipment");
+                const idxHr = fileHeaders.indexOf("Hr meter");
+                const idxErp = fileHeaders.indexOf("ERP Issue");
+                const idxRem = fileHeaders.indexOf("Remarks");
+
+                tbody.innerHTML = '';
+                let addedCount = 0;
+
+                for (let i = 1; i < sheetData.length; i++) {
+                    const rowArr = sheetData[i];
+                    if (!rowArr || rowArr.length === 0) continue;
+
+                    const itemVal = rowArr[idxItem] ? rowArr[idxItem].toString().trim() : "";
+                    const qtyVal = rowArr[idxQty] !== undefined && rowArr[idxQty] !== null ? rowArr[idxQty].toString().trim() : "";
+                    const unitVal = rowArr[idxUnit] ? rowArr[idxUnit].toString().trim() : "";
+                    const eqpVal = rowArr[idxEqp] ? toUpperClean(rowArr[idxEqp]).trim() : "";
+                    const hrVal = rowArr[idxHr] ? rowArr[idxHr].toString().trim() : "";
+                    const erpVal = idxErp >= 0 && rowArr[idxErp] ? rowArr[idxErp].toString().trim() : "";
+                    const remVal = rowArr[idxRem] ? rowArr[idxRem].toString().trim() : "";
+
+                    if (!itemVal && !qtyVal && !unitVal && !eqpVal) continue;
+
+                    addNewRow({
+                        item: itemVal,
+                        qty: qtyVal,
+                        unit: unitVal,
+                        equipment: eqpVal,
+                        hr: hrVal,
+                        erp: erpVal,
+                        remarks: remVal
+                    });
+                    addedCount++;
                 }
 
-                jsonData.forEach(row => {
-                    addNewRow({
-                        item: row['Item'] || '',
-                        qty: row['Quanty'] || '',
-                        unit: row['Unit'] || '',
-                        equipment: row['Equipment'] || '',
-                        hr: row['Hr meter'] || '',
-                        erp: row['ERP Issue'] || '',
-                        remarks: row['Remarks'] || ''
-                    });
-                });
-
-                showCustomPopup("সফল", `সফলভাবে ${jsonData.length} টি আইটেম এক্সেল থেকে লোড করা হয়েছে!`, true);
-                e.target.value = '';
+                if (addedCount === 0) {
+                    addNewRow();
+                    showCustomPopup("Warning", "No valid item rows found in Excel!", false);
+                } else {
+                    showCustomPopup("Excel Loaded", `${addedCount} row(s) loaded successfully.`);
+                }
             } catch (err) {
-                showCustomPopup("ত্রুটি", "Excel ফাইল লোড করতে সমস্যা হয়েছে।", false);
+                console.error("Excel parse error:", err);
+                showCustomPopup("Error", "Failed to read Excel file: " + err.message, false);
+            } finally {
+                e.target.value = '';
             }
         };
         reader.readAsArrayBuffer(file);
     });
 
-    function saveToFirebase() {
-        if (!navigator.onLine) {
-            showCustomPopup("সংযোগ বিচ্ছিন্ন", "⚠️ আপনার ইন্টারনেট কানেকশন নেই! ইন্টারনেট অন করে আবার সেভ করুন।", false);
+    document.getElementById('saveBtn').addEventListener('click', async function() {
+        const entryDate = document.getElementById('entryDate').value.trim();
+        const entryIndent = document.getElementById('entryIndent').value.trim();
+        const rawReceiver = document.getElementById('entryReceiver').value;
+
+        if (!entryDate || !rawReceiver.trim()) {
+            showCustomPopup("Validation Error", "Please select Date and Receiver!", false);
             return;
         }
 
-        const dateVal = document.getElementById('entryDate').value;
-        const indentVal = document.getElementById('entryIndent').value.trim();
-        const receiverVal = document.getElementById('entryReceiver').value.trim();
-
-        if (!dateVal || !indentVal || !receiverVal) {
-            showCustomPopup("সতর্কতা", "⚠️ দয়া করে হেডার অংশের Date, Indent এবং Receiver ফিল্ডগুলো পূরণ করুন!", false);
+        const receiverCheck = validateAgainstDatabase(rawReceiver, "receiver");
+        if (!receiverCheck.valid) {
+            receiverInput.classList.add('invalid');
+            showCustomPopup(
+                "Invalid Receiver",
+                `"${rawReceiver.trim()}" is not a valid entry in receiver_list. Please select a valid receiver or add via + New Receiver.`,
+                false
+            );
             return;
         }
 
-        const rows = tbody.querySelectorAll('tr');
-        let isValid = true;
-        let errorMessage = "";
+        const entryReceiver = receiverCheck.value;
+        const matchedReceiver = receiverCheck.record;
 
-        document.querySelectorAll('input').forEach(inp => inp.classList.remove('invalid'));
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const issueItems = [];
 
         for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
-            const rowNum = i + 1;
-            const itemInput = row.querySelector('.item-input');
-            const qtyInput = row.querySelector('.qty-input');
-            const unitInput = row.querySelector('.unit-input');
-            const eqpInput = row.querySelector('.eqp-input');
-            const hrInput = row.querySelector('.hr-input');
+            const itemInp = row.querySelector('.item-input');
+            const qtyInp = row.querySelector('.qty-input');
+            const unitInp = row.querySelector('.unit-input');
+            const eqpInp = row.querySelector('.eqp-input');
+            const hrInp = row.querySelector('.hr-input');
+            const erpInp = row.querySelector('.erp-input');
+            const remInp = row.querySelector('.rem-input');
 
-            const itemName = itemInput.value.trim();
-            const unitName = unitInput.value.trim();
-            const eqpName = eqpInput.value.trim();
-            const qtyVal = parseFloat(qtyInput.value.trim());
+            eqpInp.value = toUpperClean(eqpInp.value);
 
-            if (!itemName || isNaN(qtyVal) || !unitName || !eqpName || !hrInput.value.trim()) {
-                isValid = false;
-                errorMessage = `রো নম্বর ${rowNum}-এর প্রয়োজনীয় ঘরগুলো খালি রয়েছে বা কোয়ান্টিটি সঠিক নয়!`;
-                if (!itemName) itemInput.classList.add('invalid');
-                if (isNaN(qtyVal)) qtyInput.classList.add('invalid');
-                if (!unitName) unitInput.classList.add('invalid');
-                if (!eqpName) eqpInput.classList.add('invalid');
-                if (!hrInput.value.trim()) hrInput.classList.add('invalid');
-                break;
+            const itemVal = itemInp.value.trim();
+            const qtyVal = parseFloat(qtyInp.value);
+            const unitVal = unitInp.value.trim();
+            const eqpRaw = eqpInp.value;
+            const hrVal = hrInp.value.trim();
+            const erpVal = erpInp.value.trim();
+            const remVal = remInp.value.trim();
+
+            if (!itemVal && !qtyInp.value && !eqpRaw.trim() && !hrVal) continue;
+
+            if (!itemVal || isNaN(qtyVal) || qtyVal <= 0 || !unitVal) {
+                showCustomPopup("Validation Error", `Row ${i + 1}: Item, valid Quanty (> 0), and Unit are required!`, false);
+                return;
             }
 
-            const matchedProduct = productDatabase.find(p => p.name.toLowerCase() === itemName.toLowerCase() && p.unit.toLowerCase() === unitName.toLowerCase());
-            
-            if (matchedProduct) {
-                if (qtyVal > matchedProduct.stock) {
-                    isValid = false;
-                    errorMessage = `⚠️ রো নম্বর ${rowNum}: "${itemName} [${unitName}]" আইটেমের স্টক অপর্যাপ্ত!\nবর্তমান স্টক: ${matchedProduct.stock} ${unitName}, আপনি এন্ট্রি করেছেন: ${qtyVal}`;
-                    qtyInput.classList.add('invalid');
-                    break;
-                }
-            } else {
-                isValid = false;
-                errorMessage = `⚠️ রো নম্বর ${rowNum}: "${itemName}" (${unitName}) আইটেমটি স্টক ডাটাবেজে সঠিক ইউনিটসহ পাওয়া যায়নি!`;
-                itemInput.classList.add('invalid');
-                break;
+            const equipmentCheck = validateAgainstDatabase(eqpRaw, "equipment");
+            if (!equipmentCheck.valid) {
+                eqpInp.classList.add('invalid');
+                showCustomPopup(
+                    "Invalid Equipment",
+                    `Row ${i + 1}: "${eqpRaw.trim()}" is not a valid entry in equipment_list. Please select a valid equipment or add via + New Equipment.`,
+                    false
+                );
+                return;
             }
+
+            const eqpVal = equipmentCheck.value;
+            eqpInp.value = eqpVal;
+            eqpInp.classList.remove('invalid');
+
+            const matchedStock = productDatabase.find(p =>
+                p.name.toLowerCase() === itemVal.toLowerCase() &&
+                p.unit.toLowerCase() === unitVal.toLowerCase()
+            );
+
+            if (!matchedStock) {
+                showCustomPopup("Stock Error", `Row ${i + 1}: "${itemVal}" [${unitVal}] is not available in stock_summary!`, false);
+                return;
+            }
+
+            if (qtyVal > matchedStock.stock) {
+                showCustomPopup("Insufficient Stock", `Row ${i + 1}: Requested ${qtyVal} ${unitVal}, but only ${formatStockValue(matchedStock.stock)} ${unitVal} available!`, false);
+                return;
+            }
+
+            issueItems.push({
+                firebaseKey: matchedStock.firebaseKey,
+                item: itemVal,
+                quantity: qtyVal,
+                unit: unitVal,
+                equipment: eqpVal,
+                hrMeter: hrVal,
+                erpIssue: erpVal,
+                remarks: remVal
+            });
         }
 
-        if (!isValid) {
-            showCustomPopup("সতর্কতা", errorMessage, false);
+        if (issueItems.length === 0) {
+            showCustomPopup("Warning", "Please enter at least one valid item to issue!", false);
             return;
         }
 
         const saveBtn = document.getElementById('saveBtn');
         saveBtn.disabled = true;
-        saveBtn.innerHTML = "⏳ সেভ ও স্টক আপডেট হচ্ছে...";
-        document.getElementById('mainContainer').style.pointerEvents = 'none';
+        saveBtn.textContent = "Submitting...";
 
-        db.ref('consumption_entries').once('value').then((snapshot) => {
-            let nextCounter = 1;
-            if (snapshot.exists()) {
-                nextCounter = snapshot.numChildren() + 1;
-            }
-            const postingId = "ISU-" + String(nextCounter).padStart(6, '0');
+        try {
+            const issueNo = await generate5DigitIssueNo();
 
-            const postingRef = db.ref('consumption_entries').push();
-            const entriesData = [];
-            const stockUpdates = {};
+            for (const entry of issueItems) {
+                const stockRef = db.ref(`stock_summary/${entry.firebaseKey}`);
+                const txResult = await stockRef.transaction((currentData) => {
+                    if (!currentData) return currentData;
+                    const currentStock = parseFloat(currentData.stock) || 0;
+                    if (currentStock < entry.quantity) {
+                        return;
+                    }
+                    return {
+                        ...currentData,
+                        stock: currentStock - entry.quantity
+                    };
+                });
 
-            rows.forEach((row, index) => {
-                const itemName = row.querySelector('.item-input').value.trim();
-                const qty = parseFloat(row.querySelector('.qty-input').value.trim()) || 0;
-                const unit = row.querySelector('.unit-input').value.trim();
-                const equipment = row.querySelector('.eqp-input').value.trim();
-                const hr = row.querySelector('.hr-input').value.trim();
-                const erp = row.querySelector('.erp-input').value.trim(); // ERP Issue ডেটা সংগ্রহ
-                const remarks = row.querySelector('.rem-input').value.trim();
-
-                entriesData.push({ sl: index + 1, item: itemName, qty: qty, unit: unit, equipment: equipment, hr: hr, erp: erp, remarks: remarks });
-
-                const matchedProduct = productDatabase.find(p => p.name.toLowerCase() === itemName.toLowerCase() && p.unit.toLowerCase() === unit.toLowerCase());
-                if (matchedProduct) {
-                    const newStock = Math.max(0, matchedProduct.stock - qty);
-                    matchedProduct.stock = newStock;
-                    stockUpdates[`stock_summary/${matchedProduct.firebaseKey}/stock`] = newStock;
+                if (!txResult.committed) {
+                    throw new Error(`Insufficient stock for "${entry.item}" during transaction.`);
                 }
-            });
+            }
 
-            const updates = {};
-            updates[`consumption_entries/${postingRef.key}`] = {
-                postingNo: postingId,
-                date: dateVal,
-                indent: indentVal,
-                receiver: receiverVal,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                rows: entriesData
+            const issuePayload = {
+                issueNo: issueNo,
+                date: entryDate,
+                indent: entryIndent,
+                receiver: entryReceiver,
+                receiverDesignation: matchedReceiver ? matchedReceiver.designation : "",
+                receiverPhone: matchedReceiver ? matchedReceiver.phone : "",
+                createdAt: new Date().toISOString(),
+                items: issueItems.map(({ firebaseKey, ...rest }) => rest)
             };
-            
-            Object.assign(updates, stockUpdates);
 
-            db.ref().update(updates)
-            .then(() => {
-                showCustomPopup("সফল!", `✅ ফায়ারবেজে ডেটা সেভ এবং স্টক আপডেট সম্পন্ন হয়েছে!\n\nটার্গেট ইস্যু নম্বর: ${postingId}`, true);
-                
-                document.getElementById('entryIndent').value = '';
-                document.getElementById('entryReceiver').value = '';
+            await db.ref('stock_issue').push(issuePayload);
 
-                tbody.innerHTML = '';
-                addNewRow();
-                fetchAvailableStock();
-            })
-            .catch((error) => {
-                console.error(error);
-                showCustomPopup("ত্রুটি", "⚠️ সেভ করতে সমস্যা হয়েছে: " + error.message, false);
-            })
-            .finally(() => {
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = "🔥 ফায়ারবেজে সেভ করুন (Ctrl + S)";
-                document.getElementById('mainContainer').style.pointerEvents = 'auto';
-                document.getElementById('entryIndent').focus();
-            });
+            if (analytics) {
+                analytics.logEvent('stock_issue_submitted', {
+                    issue_no: issueNo,
+                    item_count: issueItems.length
+                });
+            }
 
-        }).catch((error) => {
-            console.error(error);
-            showCustomPopup("ত্রুটি", "⚠️ ইস্যু নম্বর তৈরি করতে সমস্যা হয়েছে!", false);
+            showCustomPopup("Success", "Stock issued and inventory updated successfully!", true, issueNo);
+
+            document.getElementById('entryIndent').value = "";
+            document.getElementById('entryReceiver').value = "";
+            document.getElementById('entryReceiver').classList.remove('invalid');
+            tbody.innerHTML = "";
+            addNewRow();
+            fetchAvailableStock();
+        } catch (err) {
+            console.error("Save error:", err);
+            showCustomPopup("Error", "Failed to save stock issue: " + err.message, false);
+        } finally {
             saveBtn.disabled = false;
-            saveBtn.innerHTML = "🔥 ফায়ারবেজে সেভ করুন (Ctrl + S)";
-            document.getElementById('mainContainer').style.pointerEvents = 'auto';
-        });
-    }
-
-    document.getElementById('saveBtn').addEventListener('click', saveToFirebase);
-    
-    document.addEventListener('keydown', function(e) {
-        if (e.ctrlKey && e.key === 's') {
-            e.preventDefault();
-            saveToFirebase();
+            saveBtn.textContent = "Submit";
         }
     });
 </script>
-
 </body>
 </html>
