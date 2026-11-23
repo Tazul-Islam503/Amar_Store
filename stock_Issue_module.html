@@ -392,10 +392,10 @@
 <div id="customPopupOverlay" class="modal-overlay">
     <div class="custom-popup-box">
         <h3 id="popupTitle">Success</h3>
-        <p id="popupMessage">Message goes here...</p>
+        <p id="popupMessage"></p>
         <div id="issueNoBadge" class="issue-no-badge">
             <span class="lbl">Issue Posting No</span>
-            <span id="popupIssueNo" class="val">ISS-00001</span>
+            <span id="popupIssueNo" class="val">ISS-2600001</span>
         </div>
         <button type="button" class="custom-popup-btn" onclick="closeCustomPopup()">OK</button>
     </div>
@@ -814,23 +814,65 @@
             });
     }
 
-    async function generate5DigitIssueNo() {
-        let nextNum = 1;
+    async function generateDynamicYearlyIssueNo() {
+        const now = new Date();
+        const yearTwoDigit = String(now.getFullYear()).slice(-2);
+        const prefix = `ISS-${yearTwoDigit}`;
+        const exactPattern = new RegExp(`^ISS-${yearTwoDigit}(\\d{6})$`);
+
+        let maxSeqForYear = 0;
+
         try {
-            const snap = await db.ref('stock_issue').limitToLast(1).once('value');
+            const snap = await db.ref('stock_issue').once('value');
             if (snap.exists()) {
                 const data = snap.val();
-                const lastKey = Object.keys(data)[0];
-                const lastIssueNo = data[lastKey].issueNo || '';
-                const match = lastIssueNo.match(/\d+/);
-                if (match) {
-                    nextNum = parseInt(match[0], 10) + 1;
-                }
+                Object.keys(data).forEach(key => {
+                    const rec = data[key];
+                    const candidates = [key, rec?.firebaseId, rec?.issueNo];
+                    candidates.forEach(val => {
+                        if (typeof val === 'string') {
+                            const match = val.trim().match(exactPattern);
+                            if (match) {
+                                const seqNum = parseInt(match[1], 10);
+                                if (!isNaN(seqNum) && seqNum > maxSeqForYear) {
+                                    maxSeqForYear = seqNum;
+                                }
+                            }
+                        }
+                    });
+                });
             }
         } catch (e) {
-            console.warn("Issue No fetch error, fallback sequence used:", e);
+            console.warn("Yearly Issue No fetch error, fallback sequence used:", e);
         }
-        return 'ISS-' + String(nextNum).padStart(5, '0');
+
+        const nextSeq = maxSeqForYear + 1;
+        const sixDigitSeq = String(nextSeq).padStart(6, '0');
+        return `${prefix}${sixDigitSeq}`;
+    }
+
+    function buildFlatIssuePayload(issueNumber, items) {
+        const flatPayload = {
+            firebaseId: issueNumber,
+            issueNo: issueNumber,
+            date: document.getElementById('entryDate').value.trim(),
+            indent: document.getElementById('entryIndent').value.trim(),
+            receiver: document.getElementById('entryReceiver').value.trim(),
+            createdAt: new Date().toISOString()
+        };
+
+        items.forEach((item, idx) => {
+            const n = idx + 1;
+            flatPayload[`itemName_${n}`] = item.itemName;
+            flatPayload[`quantity_${n}`] = item.quantity;
+            flatPayload[`unit_${n}`] = item.unit;
+            flatPayload[`equipment_${n}`] = item.equipment;
+            flatPayload[`hrMeter_${n}`] = item.hrMeter;
+            flatPayload[`erpIssue_${n}`] = item.erpIssue;
+            flatPayload[`remarks_${n}`] = item.remarks;
+        });
+
+        return flatPayload;
     }
 
     const headerInputs = Array.from(document.querySelectorAll('.header-input'));
@@ -892,304 +934,393 @@
             const hasSuggestions = receiverSuggestions.children.length > 0;
 
             if (inp === receiverInput && hasSuggestions && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+                e.preventDefault();
                 const items = Array.from(receiverSuggestions.querySelectorAll('li'));
                 let activeIndex = items.findIndex(item => item.classList.contains('active'));
-
+                if (activeIndex >= 0) items[activeIndex].classList.remove('active');
                 if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    if (activeIndex >= 0) items[activeIndex].classList.remove('active');
                     activeIndex = (activeIndex + 1) % items.length;
-                    items[activeIndex].classList.add('active');
-                    items[activeIndex].scrollIntoView({ block: 'nearest' });
-                    return;
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    if (activeIndex >= 0) items[activeIndex].classList.remove('active');
+                } else {
                     activeIndex = (activeIndex - 1 + items.length) % items.length;
-                    items[activeIndex].classList.add('active');
-                    items[activeIndex].scrollIntoView({ block: 'nearest' });
-                    return;
                 }
-            }
-
-            if (inp === receiverInput && hasSuggestions && e.key === 'Enter') {
-                const activeItem = receiverSuggestions.querySelector('li.active');
-                if (activeItem) {
-                    e.preventDefault();
-                    receiverInput.value = activeItem.getAttribute('data-name') || activeItem.textContent;
-                    receiverInput.classList.remove('invalid');
-                    receiverSuggestions.innerHTML = '';
-                    const firstRowInput = tbody.querySelector('.item-input');
-                    if (firstRowInput) firstRowInput.focus();
-                    return;
-                }
+                items[activeIndex].classList.add('active');
+                items[activeIndex].scrollIntoView({ block: 'nearest' });
+                return;
             }
 
             if (e.key === 'Enter') {
                 e.preventDefault();
+                if (inp === receiverInput && hasSuggestions) {
+                    const activeItem = receiverSuggestions.querySelector('li.active');
+                    if (activeItem) {
+                        receiverInput.value = activeItem.getAttribute('data-name') || activeItem.textContent;
+                        receiverInput.classList.remove('invalid');
+                        receiverSuggestions.innerHTML = '';
+                        const firstRowInput = tbody.querySelector('.item-input');
+                        if (firstRowInput) firstRowInput.focus();
+                        return;
+                    }
+                }
+
                 if (inp === receiverInput) {
                     clearIfUnlisted(receiverInput, 'receiver');
-                    receiverSuggestions.innerHTML = '';
+                }
+
+                if (idx < headerInputs.length - 1) {
+                    headerInputs[idx + 1].focus();
+                } else {
                     const firstRowInput = tbody.querySelector('.item-input');
                     if (firstRowInput) firstRowInput.focus();
-                } else if (idx + 1 < headerInputs.length) {
+                }
+            } else if (e.key === 'ArrowDown' && !hasSuggestions) {
+                e.preventDefault();
+                if (idx < headerInputs.length - 1) {
                     headerInputs[idx + 1].focus();
+                } else {
+                    const firstRowInput = tbody.querySelector('.item-input');
+                    if (firstRowInput) firstRowInput.focus();
+                }
+            } else if (e.key === 'ArrowUp' && !hasSuggestions) {
+                e.preventDefault();
+                if (idx > 0) {
+                    headerInputs[idx - 1].focus();
                 }
             }
         });
     });
 
-    function updateSerialNumbers() {
-        const rows = Array.from(tbody.querySelectorAll('tr'));
-        rows.forEach((row, index) => {
-            const slCell = row.querySelector('.sl-cell');
-            if (slCell) slCell.textContent = index + 1;
-        });
+    // Unit-এর পরের কলামগুলোর (Equipment, Hr meter, ERP Issue, Remarks) ডাটা সংগ্রহ
+    function getAfterUnitData(tr) {
+        return {
+            equipment: (tr.querySelector('.eqp-input')?.value || '').trim(),
+            hrMeter: (tr.querySelector('.hr-input')?.value || '').trim(),
+            erpIssue: (tr.querySelector('.erp-input')?.value || '').trim(),
+            remarks: (tr.querySelector('.rem-input')?.value || '').trim()
+        };
     }
 
-    function ensureTrailingEmptyRow() {
-        const rows = Array.from(tbody.querySelectorAll('tr'));
-        if (rows.length === 0) {
-            addRow();
-            return;
-        }
-        const lastRow = rows[rows.length - 1];
-        const lastItemVal = (lastRow.querySelector('.item-input')?.value || '').trim();
-        const lastQtyVal = (lastRow.querySelector('.qty-input')?.value || '').trim();
-        if (lastItemVal || lastQtyVal) {
-            addRow();
-        }
+    // Unit-এর পরের কলামগুলোর মধ্যে কোনো ডাটা আছে কি না চেক করা
+    function hasAnyDataAfterUnit(tr) {
+        const d = getAfterUnitData(tr);
+        return Boolean(d.equipment || d.hrMeter || d.erpIssue || d.remarks);
     }
 
-    function addRow(prefill = {}) {
+    // রো-টি ১ম রো কি না চেক করা
+    function isFirstRow(tr) {
+        return tbody.rows.length > 0 && tbody.rows[0] === tr;
+    }
+
+    function addNewRow(itemData = null, insertAtIndex = null) {
         const tr = document.createElement('tr');
+
         tr.innerHTML = `
             <td class="sl-cell"></td>
             <td style="position: relative;">
-                <input type="text" class="item-input" placeholder="Search item..." autocomplete="off" value="${prefill.item || ''}">
-                <ul class="suggestions-box item-suggestions"></ul>
+                <input type="text" class="item-input" autocomplete="off" value="${itemData && itemData.itemName ? itemData.itemName : ''}">
+                <ul class="suggestions-box"></ul>
             </td>
-            <td><input type="number" class="qty-input" step="any" min="0" placeholder="0" value="${prefill.qty ?? ''}"></td>
-            <td><input type="text" class="unit-input readonly-input" readonly value="${prefill.unit || ''}"></td>
+            <td>
+                <input type="number" class="qty-input" step="any" min="0.01" value="${itemData && itemData.quantity !== undefined ? itemData.quantity : ''}">
+            </td>
+            <td>
+                <input type="text" class="unit-input readonly-input" readonly tabindex="-1" value="${itemData && itemData.unit ? itemData.unit : ''}">
+            </td>
             <td style="position: relative;">
-                <input type="text" class="eqp-input eqp-uppercase" placeholder="Search equipment..." autocomplete="off" value="${prefill.equipment || ''}">
-                <ul class="suggestions-box eqp-suggestions"></ul>
+                <input type="text" class="eqp-input eqp-uppercase" autocomplete="off" value="${itemData && itemData.equipment ? itemData.equipment : ''}">
+                <ul class="suggestions-box"></ul>
             </td>
-            <td><input type="text" class="hr-input" placeholder="Hr" value="${prefill.hrMeter || ''}"></td>
-            <td><input type="text" class="erp-input" placeholder="ERP No" value="${prefill.erpIssue || ''}"></td>
-            <td><input type="text" class="rem-input" placeholder="Remarks" value="${prefill.remarks || ''}"></td>
-            <td><button type="button" class="delete-btn" title="Remove row">✕</button></td>
+            <td>
+                <input type="text" class="hr-input" value="${itemData && itemData.hrMeter ? itemData.hrMeter : ''}">
+            </td>
+            <td>
+                <input type="text" class="erp-input" value="${itemData && itemData.erpIssue ? itemData.erpIssue : ''}">
+            </td>
+            <td>
+                <input type="text" class="rem-input" value="${itemData && itemData.remarks ? itemData.remarks : ''}">
+            </td>
+            <td>
+                <button type="button" class="delete-btn" onclick="deleteRow(this)">X</button>
+            </td>
         `;
 
-        tbody.appendChild(tr);
-        updateSerialNumbers();
+        if (typeof insertAtIndex === 'number' && insertAtIndex >= 0 && insertAtIndex < tbody.rows.length) {
+            tbody.insertBefore(tr, tbody.rows[insertAtIndex]);
+        } else {
+            tbody.appendChild(tr);
+        }
 
+        attachRowEvents(tr);
+        updateRowNumbers();
+        return tr;
+    }
+
+    function deleteRow(btn) {
+        const tr = btn.closest('tr');
+        if (tbody.rows.length > 1) {
+            tr.remove();
+            updateRowNumbers();
+        } else {
+            tr.querySelectorAll('input').forEach(inp => {
+                inp.value = '';
+                inp.classList.remove('invalid');
+            });
+        }
+    }
+
+    function updateRowNumbers() {
+        Array.from(tbody.rows).forEach((row, index) => {
+            row.querySelector('.sl-cell').textContent = index + 1;
+        });
+    }
+
+    function attachRowEvents(tr) {
         const itemInput = tr.querySelector('.item-input');
-        const itemSugBox = tr.querySelector('.item-suggestions');
         const qtyInput = tr.querySelector('.qty-input');
         const unitInput = tr.querySelector('.unit-input');
         const eqpInput = tr.querySelector('.eqp-input');
-        const eqpSugBox = tr.querySelector('.eqp-suggestions');
         const hrInput = tr.querySelector('.hr-input');
         const erpInput = tr.querySelector('.erp-input');
         const remInput = tr.querySelector('.rem-input');
-        const delBtn = tr.querySelector('.delete-btn');
 
-        function applyProductMatch(prod) {
-            if (!prod) return;
-            itemInput.value = prod.name;
-            unitInput.value = prod.unit;
-            tr.dataset.firebaseKey = prod.firebaseKey;
-            tr.dataset.maxStock = prod.stock;
-            itemInput.classList.remove('invalid');
-            itemSugBox.innerHTML = '';
-            ensureTrailingEmptyRow();
+        const itemSuggestions = itemInput.nextElementSibling;
+        const eqpSuggestions = eqpInput.nextElementSibling;
+
+        // Unit-এর পরের কলামগুলোতে কোনো ডাটা থাকলে (১ম রো বাদে) নতুন রো ইনসার্ট ও কপি করার হেল্পার
+        function insertNextRowWithAfterUnitData() {
+            const rows = Array.from(tbody.rows);
+            const rIdx = rows.indexOf(tr);
+            const copiedData = getAfterUnitData(tr);
+            const insertedRow = addNewRow(copiedData, rIdx + 1);
+            insertedRow.querySelector('.item-input').focus();
         }
 
         function renderItemSuggestions() {
-            const q = itemInput.value.trim().toLowerCase();
-            const matches = productDatabase.filter(p => !q || p.name.toLowerCase().includes(q));
-            itemSugBox.innerHTML = '';
-            if (!matches.length) return;
+            const val = itemInput.value.trim().toLowerCase();
+            itemSuggestions.innerHTML = '';
+
+            const matches = productDatabase.filter(p =>
+                !val || p.name.toLowerCase().includes(val)
+            );
 
             matches.slice(0, 20).forEach((prod, idx) => {
                 const li = document.createElement('li');
                 if (idx === 0) li.classList.add('active');
+                li.setAttribute('data-name', prod.name);
+                li.setAttribute('data-unit', prod.unit);
 
                 const nameSpan = document.createElement('span');
                 nameSpan.textContent = prod.name;
 
-                const stockSpan = document.createElement('span');
-                stockSpan.className = 'stock-tag';
-                stockSpan.textContent = `Stock: ${formatStockValue(prod.stock)} ${prod.unit}`;
+                const tagSpan = document.createElement('span');
+                tagSpan.className = 'stock-tag';
+                tagSpan.textContent = `Stock: ${formatStockValue(prod.stock)} ${prod.unit}`;
 
                 li.appendChild(nameSpan);
-                li.appendChild(stockSpan);
+                li.appendChild(tagSpan);
 
                 li.addEventListener('mousedown', function(e) {
                     e.preventDefault();
-                    applyProductMatch(prod);
+                    itemInput.value = prod.name;
+                    unitInput.value = prod.unit;
+                    itemInput.classList.remove('invalid');
+                    itemSuggestions.innerHTML = '';
                     qtyInput.focus();
                 });
 
-                itemSugBox.appendChild(li);
+                itemSuggestions.appendChild(li);
             });
         }
 
-        function renderEqpSuggestions() {
-            const q = toUpperClean(eqpInput.value).trim();
-            const matches = equipmentDatabase.filter(eq => {
-                const label = formatEquipmentLabel(eq);
-                return !q || label.includes(q) || eq.code.includes(q) || eq.name.includes(q);
-            });
+        function renderEquipmentSuggestions() {
+            const val = toUpperClean(eqpInput.value).trim().toLowerCase();
+            eqpSuggestions.innerHTML = '';
 
-            eqpSugBox.innerHTML = '';
-            if (!matches.length) return;
+            const matches = equipmentDatabase.filter(eq => {
+                const label = formatEquipmentLabel(eq).toLowerCase();
+                return !val || label.includes(val);
+            });
 
             matches.slice(0, 20).forEach((eq, idx) => {
                 const label = formatEquipmentLabel(eq);
                 const li = document.createElement('li');
                 if (idx === 0) li.classList.add('active');
-                li.textContent = label;
+                li.setAttribute('data-label', label);
+
+                const leftSpan = document.createElement('span');
+                leftSpan.textContent = label;
+
+                li.appendChild(leftSpan);
 
                 li.addEventListener('mousedown', function(e) {
                     e.preventDefault();
                     eqpInput.value = label;
                     eqpInput.classList.remove('invalid');
-                    eqpSugBox.innerHTML = '';
-                    hrInput.focus();
+                    eqpSuggestions.innerHTML = '';
+                    // ১ম রো না হলে এবং Unit-এর পরে ডাটা থাকলে নতুন রো ইনসার্ট হবে, নাহলে Hr meter-এ যাবে
+                    if (!isFirstRow(tr) && hasAnyDataAfterUnit(tr)) {
+                        insertNextRowWithAfterUnitData();
+                    } else {
+                        hrInput.focus();
+                    }
                 });
 
-                eqpSugBox.appendChild(li);
+                eqpSuggestions.appendChild(li);
             });
         }
 
-        function bindSuggestionNav(inputEl, sugBox, renderFn, onPick, nextFocusEl) {
-            inputEl.addEventListener('input', () => {
-                if (inputEl === itemInput) {
-                    delete tr.dataset.firebaseKey;
-                    delete tr.dataset.maxStock;
-                    unitInput.value = '';
-                }
-                renderFn();
-                ensureTrailingEmptyRow();
-            });
-
-            inputEl.addEventListener('focus', renderFn);
-
-            inputEl.addEventListener('keydown', function(e) {
-                const items = Array.from(sugBox.querySelectorAll('li'));
-                if (items.length > 0 && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
-                    e.preventDefault();
-                    let activeIdx = items.findIndex(li => li.classList.contains('active'));
-                    if (activeIdx >= 0) items[activeIdx].classList.remove('active');
-                    activeIdx = e.key === 'ArrowDown'
-                        ? (activeIdx + 1) % items.length
-                        : (activeIdx - 1 + items.length) % items.length;
-                    items[activeIdx].classList.add('active');
-                    items[activeIdx].scrollIntoView({ block: 'nearest' });
-                    return;
-                }
-
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const activeItem = sugBox.querySelector('li.active');
-                    if (activeItem) {
-                        onPick(activeItem);
-                    }
-                    sugBox.innerHTML = '';
-                    if (nextFocusEl) nextFocusEl.focus();
-                }
-            });
-        }
-
-        bindSuggestionNav(
-            itemInput,
-            itemSugBox,
-            renderItemSuggestions,
-            (activeItem) => {
-                const chosenName = activeItem.firstChild?.textContent?.trim();
-                const prod = productDatabase.find(p => p.name === chosenName);
-                if (prod) applyProductMatch(prod);
-            },
-            qtyInput
-        );
-
+        itemInput.addEventListener('input', renderItemSuggestions);
+        itemInput.addEventListener('focus', renderItemSuggestions);
         itemInput.addEventListener('blur', () => {
             setTimeout(() => {
-                itemSugBox.innerHTML = '';
-                const val = itemInput.value.trim();
-                if (!val) {
-                    unitInput.value = '';
-                    delete tr.dataset.firebaseKey;
-                    delete tr.dataset.maxStock;
-                    return;
-                }
-                const matched = productDatabase.find(p => p.name.toLowerCase() === val.toLowerCase());
+                itemSuggestions.innerHTML = '';
+                const matched = productDatabase.find(p => p.name.toLowerCase() === itemInput.value.trim().toLowerCase());
                 if (matched) {
-                    applyProductMatch(matched);
-                } else {
-                    itemInput.value = '';
+                    itemInput.value = matched.name;
+                    unitInput.value = matched.unit;
+                    itemInput.classList.remove('invalid');
+                } else if (itemInput.value.trim() !== '') {
                     unitInput.value = '';
-                    delete tr.dataset.firebaseKey;
-                    delete tr.dataset.maxStock;
                 }
             }, 150);
         });
 
-        bindSuggestionNav(
-            eqpInput,
-            eqpSugBox,
-            renderEqpSuggestions,
-            (activeItem) => {
-                eqpInput.value = activeItem.textContent.trim();
-                eqpInput.classList.remove('invalid');
-            },
-            hrInput
-        );
-
+        eqpInput.addEventListener('input', renderEquipmentSuggestions);
+        eqpInput.addEventListener('focus', renderEquipmentSuggestions);
         eqpInput.addEventListener('blur', () => {
             setTimeout(() => {
-                eqpSugBox.innerHTML = '';
+                eqpSuggestions.innerHTML = '';
                 clearIfUnlisted(eqpInput, 'equipment');
             }, 150);
         });
 
-        [qtyInput, hrInput, erpInput, remInput].forEach((inp, i, arr) => {
+        const navigableInputs = [itemInput, qtyInput, eqpInput, hrInput, erpInput, remInput];
+
+        navigableInputs.forEach((inp, cIdx) => {
             inp.addEventListener('keydown', function(e) {
+                const activeBox = (inp === itemInput) ? itemSuggestions :
+                                  (inp === eqpInput) ? eqpSuggestions : null;
+                const hasSug = activeBox && activeBox.children.length > 0;
+
+                if (hasSug && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+                    e.preventDefault();
+                    const items = Array.from(activeBox.querySelectorAll('li'));
+                    let activeIndex = items.findIndex(item => item.classList.contains('active'));
+                    if (activeIndex >= 0) items[activeIndex].classList.remove('active');
+                    if (e.key === 'ArrowDown') {
+                        activeIndex = (activeIndex + 1) % items.length;
+                    } else {
+                        activeIndex = (activeIndex - 1 + items.length) % items.length;
+                    }
+                    items[activeIndex].classList.add('active');
+                    items[activeIndex].scrollIntoView({ block: 'nearest' });
+                    return;
+                }
+
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    if (i + 1 < arr.length) {
-                        arr[i + 1].focus();
+                    if (hasSug) {
+                        const activeItem = activeBox.querySelector('li.active');
+                        if (activeItem) {
+                            if (inp === itemInput) {
+                                const pName = activeItem.getAttribute('data-name');
+                                const pUnit = activeItem.getAttribute('data-unit');
+                                itemInput.value = pName;
+                                unitInput.value = pUnit;
+                                itemInput.classList.remove('invalid');
+                                itemSuggestions.innerHTML = '';
+                                qtyInput.focus();
+                                return;
+                            } else if (inp === eqpInput) {
+                                eqpInput.value = activeItem.getAttribute('data-label');
+                                eqpInput.classList.remove('invalid');
+                                eqpSuggestions.innerHTML = '';
+                                if (!isFirstRow(tr) && hasAnyDataAfterUnit(tr)) {
+                                    insertNextRowWithAfterUnitData();
+                                } else {
+                                    hrInput.focus();
+                                }
+                                return;
+                            }
+                        }
+                    }
+
+                    if (inp === eqpInput) {
+                        clearIfUnlisted(eqpInput, 'equipment');
+                    }
+
+                    // ১ম রো পুরোটা ফোকাস করবে।
+                    // ১ম রো-এর পরের রো-গুলোতে: Unit-এর পরে (eqp, hr, erp, rem) ডাটা থাকলে ফোকাস না করে নতুন রো ইনসার্ট করবে;
+                    // Unit-এর পরে blank থাকলে স্বাভাবিক নিয়মে ফোকাস করবে।
+                    const isAfterUnitField = (inp === eqpInput || inp === hrInput || inp === erpInput || inp === remInput);
+                    if (!isFirstRow(tr) && isAfterUnitField && hasAnyDataAfterUnit(tr)) {
+                        insertNextRowWithAfterUnitData();
+                        return;
+                    }
+
+                    if (cIdx < navigableInputs.length - 1) {
+                        navigableInputs[cIdx + 1].focus();
                     } else {
-                        ensureTrailingEmptyRow();
-                        const nextRow = tr.nextElementSibling;
-                        if (nextRow) nextRow.querySelector('.item-input')?.focus();
+                        if (itemInput.value.trim() !== '') {
+                            const rows = Array.from(tbody.rows);
+                            const rIdx = rows.indexOf(tr);
+                            const copiedData = getAfterUnitData(tr);
+                            if (rIdx === rows.length - 1) {
+                                const nextTr = addNewRow(copiedData);
+                                nextTr.querySelector('.item-input').focus();
+                            } else {
+                                rows[rIdx + 1].querySelector('.item-input').focus();
+                            }
+                        } else {
+                            showCustomPopup("Missing Item", "Please select an Item before moving to a new row!", false);
+                        }
+                    }
+                } else if (e.key === 'ArrowRight' && !hasSug) {
+                    if (cIdx < navigableInputs.length - 1) {
+                        e.preventDefault();
+                        navigableInputs[cIdx + 1].focus();
+                    }
+                } else if (e.key === 'ArrowLeft' && !hasSug) {
+                    if (cIdx > 0) {
+                        e.preventDefault();
+                        navigableInputs[cIdx - 1].focus();
+                    }
+                } else if (e.key === 'ArrowDown' && !hasSug) {
+                    e.preventDefault();
+                    const rows = Array.from(tbody.rows);
+                    const rIdx = rows.indexOf(tr);
+                    if (rIdx < rows.length - 1) {
+                        const targetRowInputs = [
+                            rows[rIdx + 1].querySelector('.item-input'),
+                            rows[rIdx + 1].querySelector('.qty-input'),
+                            rows[rIdx + 1].querySelector('.eqp-input'),
+                            rows[rIdx + 1].querySelector('.hr-input'),
+                            rows[rIdx + 1].querySelector('.erp-input'),
+                            rows[rIdx + 1].querySelector('.rem-input')
+                        ];
+                        if (targetRowInputs[cIdx]) targetRowInputs[cIdx].focus();
+                    }
+                } else if (e.key === 'ArrowUp' && !hasSug) {
+                    e.preventDefault();
+                    const rows = Array.from(tbody.rows);
+                    const rIdx = rows.indexOf(tr);
+                    if (rIdx > 0) {
+                        const targetRowInputs = [
+                            rows[rIdx - 1].querySelector('.item-input'),
+                            rows[rIdx - 1].querySelector('.qty-input'),
+                            rows[rIdx - 1].querySelector('.eqp-input'),
+                            rows[rIdx - 1].querySelector('.hr-input'),
+                            rows[rIdx - 1].querySelector('.erp-input'),
+                            rows[rIdx - 1].querySelector('.rem-input')
+                        ];
+                        if (targetRowInputs[cIdx]) targetRowInputs[cIdx].focus();
+                    } else {
+                        headerInputs[headerInputs.length - 1].focus();
                     }
                 }
             });
         });
-
-        qtyInput.addEventListener('input', () => {
-            qtyInput.classList.remove('invalid');
-            ensureTrailingEmptyRow();
-        });
-
-        delBtn.addEventListener('click', () => {
-            tr.remove();
-            updateSerialNumbers();
-            ensureTrailingEmptyRow();
-        });
-
-        if (prefill.item) {
-            const matched = productDatabase.find(p => p.name.toLowerCase() === prefill.item.trim().toLowerCase());
-            if (matched) {
-                applyProductMatch(matched);
-            }
-        }
     }
 
-    // Excel Upload Handler
     document.getElementById('excelFileInput').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -1199,40 +1330,47 @@
             try {
                 const data = new Uint8Array(evt.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
                 if (!rows.length) {
-                    showCustomPopup("Empty Sheet", "No rows found in the selected Excel file.", false);
+                    showCustomPopup("Empty File", "The selected Excel/CSV file has no data rows.", false);
                     return;
                 }
 
                 tbody.innerHTML = '';
                 rows.forEach(r => {
                     const itemName = (r.Item || r.item || r['Item Name'] || '').toString().trim();
-                    const qtyVal = r.Quanty ?? r.Quantity ?? r.qty ?? '';
-                    const eqpVal = toUpperClean(r.Equipment || r.equipment || '').trim();
-                    const hrVal = (r['Hr meter'] || r.Hr || r.hrMeter || '').toString().trim();
-                    const erpVal = (r['ERP Issue'] || r.ERP || r.erpIssue || '').toString().trim();
-                    const remVal = (r.Remarks || r.remarks || '').toString().trim();
+                    const quantity = r.Quanty ?? r.Quantity ?? r.quanty ?? r.quantity ?? '';
+                    const unit = (r.Unit || r.unit || '').toString().trim();
+                    const eqpCheck = validateAgainstDatabase(r.Equipment || r.equipment || '', 'equipment');
+                    const equipment = eqpCheck.valid ? eqpCheck.value : '';
+                    const hrMeter = (r['Hr meter'] || r.HrMeter || r['Hr Meter'] || r.hrMeter || '').toString().trim();
+                    const erpIssue = (r['ERP Issue'] || r.ErpIssue || r.erpIssue || '').toString().trim();
+                    const remarks = (r.Remarks || r.remarks || '').toString().trim();
 
-                    if (itemName || qtyVal !== '') {
-                        addRow({
-                            item: itemName,
-                            qty: qtyVal,
-                            equipment: eqpVal,
-                            hrMeter: hrVal,
-                            erpIssue: erpVal,
-                            remarks: remVal
+                    if (itemName || quantity !== '') {
+                        addNewRow({
+                            itemName,
+                            quantity,
+                            unit,
+                            equipment,
+                            hrMeter,
+                            erpIssue,
+                            remarks
                         });
                     }
                 });
 
-                ensureTrailingEmptyRow();
-                showCustomPopup("Excel Loaded", `Loaded ${rows.length} row(s) from "${file.name}".`);
+                if (tbody.rows.length === 0) {
+                    addNewRow();
+                }
+                updateRowNumbers();
+                showCustomPopup("Excel Loaded", `${tbody.rows.length} row(s) loaded from Excel.`);
             } catch (err) {
                 console.error("Excel parse error:", err);
-                showCustomPopup("Excel Error", "Could not read Excel file: " + err.message, false);
+                showCustomPopup("Excel Error", "Failed to read Excel file: " + err.message, false);
             } finally {
                 e.target.value = '';
             }
@@ -1240,154 +1378,152 @@
         reader.readAsArrayBuffer(file);
     });
 
-    // Submit Stock Issue (Flat structure directly under each Firebase push ID)
+    function resetIssueForm() {
+        document.getElementById('entryIndent').value = '';
+        document.getElementById('entryReceiver').value = '';
+        document.getElementById('entryReceiver').classList.remove('invalid');
+        document.getElementById('entryDate').valueAsDate = new Date();
+        tbody.innerHTML = '';
+        addNewRow();
+        fetchAvailableStock();
+    }
+
     document.getElementById('saveBtn').addEventListener('click', async function() {
         const saveBtn = this;
-        const dateVal = document.getElementById('entryDate').value.trim();
-        const indentVal = document.getElementById('entryIndent').value.trim();
-        const receiverCheck = validateAgainstDatabase(receiverInput.value, 'receiver');
+        const entryDate = document.getElementById('entryDate').value.trim();
+        const entryIndent = document.getElementById('entryIndent').value.trim();
+        const receiverInputEl = document.getElementById('entryReceiver');
 
-        if (!dateVal) {
-            showCustomPopup("Validation Error", "Please select a Date.", false);
-            return;
-        }
-        if (!receiverCheck.valid) {
-            receiverInput.classList.add('invalid');
-            showCustomPopup("Validation Error", "Please select a valid Receiver from the list or add a new receiver.", false);
-            return;
-        }
+        clearIfUnlisted(receiverInputEl, 'receiver');
+        const entryReceiver = receiverInputEl.value.trim();
 
-        const dataRows = Array.from(tbody.querySelectorAll('tr')).filter(tr => {
-            const item = (tr.querySelector('.item-input')?.value || '').trim();
-            const qty = (tr.querySelector('.qty-input')?.value || '').trim();
-            return item !== '' || qty !== '';
-        });
-
-        if (!dataRows.length) {
-            showCustomPopup("Validation Error", "Please add at least one item row before submitting.", false);
+        if (!entryDate || !entryIndent || !entryReceiver) {
+            if (!entryReceiver) receiverInputEl.classList.add('invalid');
+            showCustomPopup("Missing Header Info", "Please fill in Date, Indent, and select a valid Receiver!", false);
             return;
         }
 
-        const validatedRows = [];
-        for (let i = 0; i < dataRows.length; i++) {
-            const tr = dataRows[i];
-            const itemInput = tr.querySelector('.item-input');
-            const qtyInput = tr.querySelector('.qty-input');
-            const unitInput = tr.querySelector('.unit-input');
-            const eqpInput = tr.querySelector('.eqp-input');
-            const hrInput = tr.querySelector('.hr-input');
-            const erpInput = tr.querySelector('.erp-input');
-            const remInput = tr.querySelector('.rem-input');
+        const itemsToIssue = [];
+        let hasError = false;
+        let errorMsg = "";
 
-            const itemName = itemInput.value.trim();
-            const qtyNum = parseFloat(qtyInput.value);
-            const firebaseKey = tr.dataset.firebaseKey;
-            const maxStock = parseFloat(tr.dataset.maxStock ?? '0');
+        Array.from(tbody.rows).forEach((tr, idx) => {
+            const itemInp = tr.querySelector('.item-input');
+            const qtyInp = tr.querySelector('.qty-input');
+            const unitInp = tr.querySelector('.unit-input');
+            const eqpInp = tr.querySelector('.eqp-input');
+            const hrInp = tr.querySelector('.hr-input');
+            const erpInp = tr.querySelector('.erp-input');
+            const remInp = tr.querySelector('.rem-input');
 
-            const matchedProd = productDatabase.find(p => p.name.toLowerCase() === itemName.toLowerCase());
-            if (!matchedProd) {
-                itemInput.classList.add('invalid');
-                showCustomPopup("Validation Error", `Row ${i + 1}: Select a valid stock item.`, false);
-                return;
-            }
+            clearIfUnlisted(eqpInp, 'equipment');
 
-            if (isNaN(qtyNum) || qtyNum <= 0) {
-                qtyInput.classList.add('invalid');
-                showCustomPopup("Validation Error", `Row ${i + 1}: Quantity must be greater than 0.`, false);
-                return;
-            }
+            const itemName = itemInp.value.trim();
+            const qtyVal = parseFloat(qtyInp.value);
+            const unit = unitInp.value.trim();
+            const equipment = eqpInp.value.trim();
+            const hrMeter = hrInp.value.trim();
+            const erpIssue = erpInp.value.trim();
+            const remarks = remInp.value.trim();
 
-            const available = firebaseKey ? maxStock : matchedProd.stock;
-            if (qtyNum > available) {
-                qtyInput.classList.add('invalid');
-                showCustomPopup("Insufficient Stock", `Row ${i + 1}: Requested ${qtyNum} ${matchedProd.unit}, but only ${formatStockValue(available)} available.`, false);
-                return;
-            }
+            itemInp.classList.remove('invalid');
+            qtyInp.classList.remove('invalid');
+            eqpInp.classList.remove('invalid');
 
-            let eqpValue = "";
-            if (eqpInput.value.trim()) {
-                const eqpCheck = validateAgainstDatabase(eqpInput.value, 'equipment');
-                if (!eqpCheck.valid) {
-                    eqpInput.classList.add('invalid');
-                    showCustomPopup("Validation Error", `Row ${i + 1}: Equipment not found in equipment_list.`, false);
+            if (itemName || qtyInp.value.trim() || equipment || hrMeter || erpIssue || remarks) {
+                const matchedStock = productDatabase.find(p => p.name.toLowerCase() === itemName.toLowerCase());
+                if (!itemName || !matchedStock) {
+                    hasError = true;
+                    itemInp.classList.add('invalid');
+                    errorMsg = `Row #${idx + 1}: Please select a valid Item from available stock.`;
                     return;
                 }
-                eqpValue = eqpCheck.value;
-            }
+                if (isNaN(qtyVal) || qtyVal <= 0) {
+                    hasError = true;
+                    qtyInp.classList.add('invalid');
+                    errorMsg = `Row #${idx + 1}: Please enter a valid positive Quantity.`;
+                    return;
+                }
+                if (qtyVal > matchedStock.stock) {
+                    hasError = true;
+                    qtyInp.classList.add('invalid');
+                    errorMsg = `Row #${idx + 1}: Quantity (${qtyVal}) exceeds available stock (${formatStockValue(matchedStock.stock)} ${matchedStock.unit}) for "${matchedStock.name}".`;
+                    return;
+                }
 
-            validatedRows.push({
-                firebaseKey: matchedProd.firebaseKey,
-                itemName: matchedProd.name,
-                quantity: qtyNum,
-                unit: unitInput.value.trim() || matchedProd.unit,
-                equipment: eqpValue,
-                hrMeter: hrInput.value.trim(),
-                erpIssue: erpInput.value.trim(),
-                remarks: remInput.value.trim()
-            });
+                itemsToIssue.push({
+                    firebaseKey: matchedStock.firebaseKey,
+                    itemName: matchedStock.name,
+                    quantity: qtyVal,
+                    unit: unit || matchedStock.unit,
+                    equipment: equipment,
+                    hrMeter: hrMeter,
+                    erpIssue: erpIssue,
+                    remarks: remarks
+                });
+            }
+        });
+
+        if (hasError) {
+            showCustomPopup("Validation Error", errorMsg, false);
+            return;
+        }
+
+        if (itemsToIssue.length === 0) {
+            showCustomPopup("Empty Table", "Please enter at least one valid item to issue!", false);
+            return;
         }
 
         saveBtn.disabled = true;
+        const originalText = saveBtn.textContent;
         saveBtn.textContent = "Submitting...";
 
         try {
-            const issueNo = await generate5DigitIssueNo();
-            const createdAt = new Date().toISOString();
+            const issueNumber = await generateDynamicYearlyIssueNo();
+            const flatPayload = buildFlatIssuePayload(issueNumber, itemsToIssue);
 
-            // Post each row as a flat record directly under stock_issue/{firebaseId}
-            const updates = {};
-            for (const row of validatedRows) {
-                const newPushKey = db.ref('stock_issue').push().key;
-                updates[`stock_issue/${newPushKey}`] = {
-                    issueNo: issueNo,
-                    issueDate: dateVal,
-                    indentNo: indentVal,
-                    receiver: receiverCheck.value,
-                    itemName: row.itemName,
-                    quantity: row.quantity,
-                    unit: row.unit,
-                    equipment: row.equipment,
-                    hrMeter: row.hrMeter,
-                    erpIssue: row.erpIssue,
-                    remarks: row.remarks,
-                    createdAt: createdAt
-                };
-            }
+            await db.ref(`stock_issue/${issueNumber}`).set(flatPayload);
 
-            await db.ref().update(updates);
-
-            // Deduct issued quantity from stock_summary
-            for (const row of validatedRows) {
-                const stockRef = db.ref(`stock_summary/${row.firebaseKey}/stock`);
-                await stockRef.transaction((currentStock) => {
-                    const curr = parseFloat(currentStock) || 0;
-                    const next = curr - row.quantity;
-                    return next < 0 ? 0 : next;
+            for (const it of itemsToIssue) {
+                const stockRef = db.ref(`stock_summary/${it.firebaseKey}`);
+                await stockRef.transaction((currentData) => {
+                    if (!currentData) return currentData;
+                    const prevStock = parseFloat(currentData.stock) || 0;
+                    return {
+                        ...currentData,
+                        stock: Math.max(0, prevStock - it.quantity)
+                    };
                 });
             }
 
-            await fetchAvailableStock();
-            tbody.innerHTML = '';
-            document.getElementById('entryIndent').value = '';
-            receiverInput.value = '';
-            addRow();
+            if (analytics) {
+                analytics.logEvent('stock_issue_submitted', {
+                    issue_no: issueNumber,
+                    item_count: itemsToIssue.length
+                });
+            }
 
-            showCustomPopup("Stock Issued", `${validatedRows.length} item(s) saved and stock summary updated!`, true, issueNo);
+            resetIssueForm();
+            showCustomPopup(
+                "Issue Posted",
+                `Stock issued successfully in flat format with ID: ${issueNumber}`,
+                true,
+                issueNumber
+            );
         } catch (err) {
-            console.error("Submit error:", err);
-            showCustomPopup("Submission Error", "Failed to save stock issue: " + err.message, false);
+            console.error("Error submitting stock issue:", err);
+            showCustomPopup("Submission Error", "Failed to post stock issue: " + err.message, false);
         } finally {
             saveBtn.disabled = false;
-            saveBtn.textContent = "Submit";
+            saveBtn.textContent = originalText;
         }
     });
 
-    window.addEventListener('DOMContentLoaded', async () => {
-        await fetchAvailableStock();
-        listenToReceiverList();
-        listenToEquipmentList();
-        addRow();
-    });
+    listenToReceiverList();
+    listenToEquipmentList();
+    fetchAvailableStock();
+    addNewRow();
 </script>
+
 </body>
 </html>
