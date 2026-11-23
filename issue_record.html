@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stock Issue Report</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f6f9;
+      color: #1e293b;
+    }
+    .container {
+      max-width: 100%;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+    .header-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      gap: 10px;
+    }
+    .header-bar h2 {
+      margin: 0;
+      color: #0f172a;
+      font-size: 22px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .badge {
+      background: #e2e8f0;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #334155;
+    }
+    button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    .btn-reset {
+      background-color: #ef4444;
+      color: white;
+    }
+    .btn-reset:hover {
+      background-color: #dc2626;
+    }
+    .btn-export {
+      background-color: #10b981;
+      color: white;
+    }
+    .btn-export:hover {
+      background-color: #059669;
+    }
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      max-height: 72vh;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1100px;
+      font-size: 13px;
+    }
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background-color: #1e293b;
+      color: #ffffff;
+    }
+    th {
+      padding: 10px 8px;
+      text-align: left;
+      border: 1px solid #334155;
+      white-space: nowrap;
+      vertical-align: top;
+    }
+    th .col-title {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 12px;
+      letter-spacing: 0.4px;
+    }
+    th input.col-filter {
+      width: 100%;
+      min-width: 90px;
+      padding: 5px 7px;
+      border: 1px solid #94a3b8;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #0f172a;
+      background-color: #f8fafc;
+    }
+    th input.col-filter:focus {
+      outline: none;
+      border-color: #38bdf8;
+      background-color: #ffffff;
+    }
+    td {
+      padding: 8px 10px;
+      border: 1px solid #e2e8f0;
+      white-space: nowrap;
+      color: #1e293b;
+    }
+    td.num-col {
+      text-align: right;
+    }
+    tbody tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+    tbody tr:hover {
+      background-color: #e0f2fe;
+    }
+    .pagination-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 15px;
+      gap: 10px;
+    }
+    .page-buttons {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+    .page-btn {
+      background-color: #e2e8f0;
+      color: #1e293b;
+      padding: 6px 12px;
+    }
+    .page-btn:hover:not(:disabled) {
+      background-color: #cbd5e1;
+    }
+    .page-btn.active {
+      background-color: #2563eb;
+      color: #ffffff;
+    }
+    .page-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .status-msg {
+      text-align: center;
+      padding: 30px;
+      font-size: 15px;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header-bar">
+    <h2>Stock Issue Report</h2>
+    <div class="controls">
+      <span class="badge" id="totalCount">Total Records: 0</span>
+      <span class="badge" id="filteredCount">Filtered: 0</span>
+      <button class="btn-reset" id="resetFiltersBtn">Reset Filters</button>
+      <button class="btn-export" id="exportCsvBtn">Export CSV</button>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <table id="reportTable">
+      <thead id="tableHead"></thead>
+      <tbody id="tableBody">
+        <tr><td class="status-msg">Loading data from Firebase...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pagination-bar">
+    <div id="pageInfo" style="font-size: 13px; color: #475569;">Page 0 of 0</div>
+    <div class="page-buttons" id="paginationControls"></div>
+  </div>
+</div>
+
+<!-- Firebase Modular SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCQV_4nv_ohzevtZRxLj3Aq4kVafVEiLKw",
+    authDomain: "tazul503.firebaseapp.com",
+    databaseURL: "https://tazul503-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "tazul503",
+    storageBucket: "tazul503.firebasestorage.app",
+    messagingSenderId: "190926921011",
+    appId: "1:190926921011:web:77822854066e6a840f3246",
+    measurementId: "G-GNHSXE22TQ"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  const NODE_NAME = "stock_issue";
+  const ROWS_PER_PAGE = 100;
+
+  // Required Columns in exact order
+  const COLUMNS = [
+    "SL",
+    "Date",
+    "Issu Num",
+    "Item",
+    "Unit",
+    "Quantity",
+    "Equipment",
+    "Receiver",
+    "Indent No.",
+    "ERP Issue Num",
+    "Remarks"
+  ];
+
+  // Flexible key matching for Firebase fields
+  const FIELD_ALIASES = {
+    "Date": ["date", "issuedate", "issue_date", "createdat", "timestamp"],
+    "Issu Num": ["issunum", "issu_num", "issuenum", "issue_num", "issueno", "issue_no", "issuenumber", "issue_number"],
+    "Item": ["item", "itemname", "item_name", "material", "product", "description", "partname", "part_name"],
+    "Unit": ["unit", "uom", "units"],
+    "Quantity": ["quantity", "qty", "issueqty", "issue_qty", "issuedqty", "issued_qty"],
+    "Equipment": ["equipment", "equipmentname", "equipment_name", "machine", "vehicle", "asset"],
+    "Receiver": ["receiver", "receivedby", "received_by", "issuedto", "issued_to", "person", "recipient"],
+    "Indent No.": ["indentno", "indent_no", "indentnum", "indent_num", "indent", "requisitionno", "requisition_no"],
+    "ERP Issue Num": ["erpissuenum", "erp_issue_num", "erpissueno", "erp_issue_no", "erpno", "erp_no", "erpissue", "erp_issue"],
+    "Remarks": ["remarks", "remark", "note", "notes", "comment", "comments"]
+  };
+
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  let allRows = [];
+  let filteredRows = [];
+  let columnFilters = {};
+  let currentPage = 1;
+
+  const tableHead = document.getElementById("tableHead");
+  const tableBody = document.getElementById("tableBody");
+  const totalCountEl = document.getElementById("totalCount");
+  const filteredCountEl = document.getElementById("filteredCount");
+  const pageInfoEl = document.getElementById("pageInfo");
+  const paginationControls = document.getElementById("paginationControls");
+
+  // Helper to get value regardless of key case or underscore/space differences
+  function extractField(record, colName) {
+    if (!record || typeof record !== "object") return "";
+    const aliases = FIELD_ALIASES[colName] || [colName.toLowerCase()];
+
+    // Direct or normalized match
+    for (const [key, val] of Object.entries(record)) {
+      const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (aliases.some(alias => alias.replace(/[^a-z0-9]/g, "") === normalizedKey)) {
+        return val !== null && val !== undefined ? val : "";
+      }
+    }
+    return "";
+  }
+
+  // Parse various date formats into a Date object for accurate sorting
+  function parseDateValue(rawDate) {
+    if (!rawDate && rawDate !== 0) return null;
+
+    // Timestamp in milliseconds or seconds
+    if (typeof rawDate === "number") {
+      return new Date(rawDate < 1e12 ? rawDate * 1000 : rawDate);
+    }
+
+    const str = String(rawDate).trim();
+    if (!str) return null;
+
+    // Handle DD-MM-YYYY or DD/MM/YYYY
+    const dmyMatch = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+    if (dmyMatch) {
+      const day = parseInt(dmyMatch[1], 10);
+      const month = parseInt(dmyMatch[2], 10) - 1;
+      const year = parseInt(dmyMatch[3], 10);
+      const d = new Date(year, month, day);
+      if (!isNaN(d.getTime())) return d;
+    }
+
+    // Handle YYYY-MM-DD
+    const ymdMatch = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (ymdMatch) {
+      const year = parseInt(ymdMatch[1], 10);
+      const month = parseInt(ymdMatch[2], 10) - 1;
+      const day = parseInt(ymdMatch[3], 10);
+      const d = new Date(year, month, day);
+      if (!isNaN(d.getTime())) return d;
+    }
+
+    // Standard JS Date parse (handles "23-Nov-2036", ISO strings, etc.)
+    const parsed = new Date(str);
+    if (!isNaN(parsed.getTime())) {
+      return parsed;
+    }
+
+    return null;
+  }
+
+  // Format Date object into "23-Nov-2036" (DD-MMM-YYYY)
+  function formatDateDDMMMYYYY(dateObj, fallbackRaw) {
+    if (!dateObj || isNaN(dateObj.getTime())) {
+      return fallbackRaw !== undefined && fallbackRaw !== null ? String(fallbackRaw) : "";
+    }
+    const day = String(dateObj.getDate()).padStart(2, "0");
+    const month = MONTHS[dateObj.getMonth()];
+    const year = dateObj.getFullYear();
+    return `${day}-${month}-${year}`;
+  }
+
+  // Render Table Headers with Column Search Inputs
+  function renderTableHeader() {
+    const tr = document.createElement("tr");
+
+    COLUMNS.forEach((col) => {
+      const th = document.createElement("th");
+
+      const titleSpan = document.createElement("span");
+      titleSpan.className = "col-title";
+      titleSpan.textContent = col;
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "col-filter";
+      input.placeholder = `Search ${col}...`;
+      input.value = columnFilters[col] || "";
+
+      input.addEventListener("input", (e) => {
+        columnFilters[col] = e.target.value.trim().toLowerCase();
+        currentPage = 1;
+        applyFilters();
+      });
+
+      th.appendChild(titleSpan);
+      th.appendChild(input);
+      tr.appendChild(th);
+    });
+
+    tableHead.innerHTML = "";
+    tableHead.appendChild(tr);
+  }
+
+  // Fetch Data from Firebase Realtime Database
+  renderTableHeader();
+  const stockIssueRef = ref(db, NODE_NAME);
+
+  onValue(stockIssueRef, (snapshot) => {
+    const data = snapshot.val();
+
+    if (!data) {
+      allRows = [];
+      filteredRows = [];
+      tableBody.innerHTML = `<tr><td colspan="${COLUMNS.length}" class="status-msg">No records found in "${NODE_NAME}".</td></tr>`;
+      updateCounters();
+      renderPagination();
+      return;
+    }
+
+    const parsedRows = [];
+
+    for (const [recordId, recordValue] of Object.entries(data)) {
+      if (typeof recordValue !== "object" || recordValue === null) continue;
+
+      const rawDate = extractField(recordValue, "Date");
+      const parsedDate = parseDateValue(rawDate);
+      const formattedDate = formatDateDDMMMYYYY(parsedDate, rawDate);
+
+      // Fallback to Firebase recordId if Issu Num field is empty
+      let issuNum = extractField(recordValue, "Issu Num");
+      if (issuNum === "") issuNum = recordId;
+
+      parsedRows.push({
+        _timestamp: parsedDate ? parsedDate.getTime() : -Infinity,
+        "SL": 0, // Assigned after sorting
+        "Date": formattedDate,
+        "Issu Num": issuNum,
+        "Item": extractField(recordValue, "Item"),
+        "Unit": extractField(recordValue, "Unit"),
+        "Quantity": extractField(recordValue, "Quantity"),
+        "Equipment": extractField(recordValue, "Equipment"),
+        "Receiver": extractField(recordValue, "Receiver"),
+        "Indent No.": extractField(recordValue, "Indent No."),
+        "ERP Issue Num": extractField(recordValue, "ERP Issue Num"),
+        "Remarks": extractField(recordValue, "Remarks")
+      });
+    }
+
+    // Sort Descending by Date (Newest first)
+    parsedRows.sort((a, b) => b._timestamp - a._timestamp);
+
+    // Assign Sequential SL after descending sort
+    parsedRows.forEach((row, idx) => {
+      row["SL"] = idx + 1;
+    });
+
+    allRows = parsedRows;
+    applyFilters();
+  }, (error) => {
+    console.error("Firebase Error:", error);
+    tableBody.innerHTML = `<tr><td colspan="${COLUMNS.length}" class="status-msg" style="color:#dc2626;">Error loading data: ${error.message}</td></tr>`;
+  });
+
+  // Apply Column-by-Column Filtering
+  function applyFilters() {
+    filteredRows = allRows.filter((row) => {
+      return COLUMNS.every((col) => {
+        const filterVal = columnFilters[col];
+        if (!filterVal) return true;
+        const cellVal = row[col] !== undefined && row[col] !== null ? String(row[col]).toLowerCase() : "";
+        return cellVal.includes(filterVal);
+      });
+    });
+
+    const totalPages = Math.max(1, Math.ceil(filteredRows.length / ROWS_PER_PAGE));
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    updateCounters();
+    renderTableBody();
+    renderPagination();
+  }
+
+  // Render Table Rows (100 rows per page)
+  function renderTableBody() {
+    if (filteredRows.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="${COLUMNS.length}" class="status-msg">No matching records found.</td></tr>`;
+      return;
+    }
+
+    const startIdx = (currentPage - 1) * ROWS_PER_PAGE;
+    const endIdx = startIdx + ROWS_PER_PAGE;
+    const pageRows = filteredRows.slice(startIdx, endIdx);
+
+    const fragment = document.createDocumentFragment();
+
+    pageRows.forEach((row) => {
+      const tr = document.createElement("tr");
+      COLUMNS.forEach((col) => {
+        const td = document.createElement("td");
+        if (col === "Quantity") {
+          td.className = "num-col";
+        }
+        td.textContent = row[col] !== undefined && row[col] !== null ? row[col] : "";
+        tr.appendChild(td);
+      });
+      fragment.appendChild(tr);
+    });
+
+    tableBody.innerHTML = "";
+    tableBody.appendChild(fragment);
+  }
+
+  // Render Pagination Controls
+  function renderPagination() {
+    const totalRows = filteredRows.length;
+    const totalPages = Math.ceil(totalRows / ROWS_PER_PAGE);
+
+    if (totalPages <= 0) {
+      pageInfoEl.textContent = "Page 0 of 0";
+      paginationControls.innerHTML = "";
+      return;
+    }
+
+    const startRow = (currentPage - 1) * ROWS_PER_PAGE + 1;
+    const endRow = Math.min(currentPage * ROWS_PER_PAGE, totalRows);
+    pageInfoEl.textContent = `Showing ${startRow} to ${endRow} of ${totalRows} entries | Page ${currentPage} of ${totalPages}`;
+
+    paginationControls.innerHTML = "";
+
+    const prevBtn = document.createElement("button");
+    prevBtn.className = "page-btn";
+    prevBtn.textContent = "Previous";
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.onclick = () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderTableBody();
+        renderPagination();
+      }
+    };
+    paginationControls.appendChild(prevBtn);
+
+    let startPage = Math.max(1, currentPage - 3);
+    let endPage = Math.min(totalPages, startPage + 6);
+    if (endPage - startPage < 6) {
+      startPage = Math.max(1, endPage - 6);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      const btn = document.createElement("button");
+      btn.className = `page-btn ${i === currentPage ? "active" : ""}`;
+      btn.textContent = i;
+      btn.onclick = () => {
+        currentPage = i;
+        renderTableBody();
+        renderPagination();
+      };
+      paginationControls.appendChild(btn);
+    }
+
+    const nextBtn = document.createElement("button");
+    nextBtn.className = "page-btn";
+    nextBtn.textContent = "Next";
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.onclick = () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderTableBody();
+        renderPagination();
+      }
+    };
+    paginationControls.appendChild(nextBtn);
+  }
+
+  function updateCounters() {
+    totalCountEl.textContent = `Total Records: ${allRows.length}`;
+    filteredCountEl.textContent = `Filtered: ${filteredRows.length}`;
+  }
+
+  // Reset All Column Filters
+  document.getElementById("resetFiltersBtn").addEventListener("click", () => {
+    columnFilters = {};
+    document.querySelectorAll(".col-filter").forEach(input => input.value = "");
+    currentPage = 1;
+    applyFilters();
+  });
+
+  // Export Filtered Data to CSV
+  document.getElementById("exportCsvBtn").addEventListener("click", () => {
+    if (filteredRows.length === 0) {
+      alert("No data available to export!");
+      return;
+    }
+    const csvRows = [];
+    csvRows.push(COLUMNS.map(col => `"${String(col).replace(/"/g, '""')}"`).join(","));
+
+    filteredRows.forEach(row => {
+      const values = COLUMNS.map(col => {
+        const val = row[col] !== undefined && row[col] !== null ? String(row[col]) : "";
+        return `"${val.replace(/"/g, '""')}"`;
+      });
+      csvRows.push(values.join(","));
+    });
+
+    const blob = new Blob(["\uFEFF" + csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Stock_Issue_Report_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+</script>
+
+</body>
+</html>
