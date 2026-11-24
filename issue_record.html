@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Stock Issue Report</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <style>
     * {
       box-sizing: border-box;
@@ -82,7 +83,7 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 1100px;
+      min-width: 1060px;
       font-size: 13px;
     }
     thead {
@@ -93,7 +94,7 @@
       color: #ffffff;
     }
     th {
-      padding: 10px 8px;
+      padding: 10px 6px;
       text-align: left;
       border: 1px solid #334155;
       white-space: nowrap;
@@ -104,12 +105,19 @@
       margin-bottom: 6px;
       font-weight: 600;
       font-size: 12px;
-      letter-spacing: 0.4px;
+      letter-spacing: 0.3px;
+    }
+    th.col-date .col-title {
+      cursor: pointer;
+      user-select: none;
+    }
+    th.col-date .col-title:hover {
+      color: #38bdf8;
     }
     th input.col-filter {
       width: 100%;
-      min-width: 90px;
-      padding: 5px 7px;
+      min-width: 48px;
+      padding: 5px 6px;
       border: 1px solid #94a3b8;
       border-radius: 4px;
       font-size: 12px;
@@ -121,15 +129,83 @@
       border-color: #38bdf8;
       background-color: #ffffff;
     }
+    .qty-filter-box {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      width: 100%;
+    }
+    .qty-op-select {
+      padding: 5px 3px;
+      border: 1px solid #94a3b8;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #0f172a;
+      background-color: #f8fafc;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .qty-op-select:focus {
+      outline: none;
+      border-color: #38bdf8;
+      background-color: #ffffff;
+    }
+    .qty-filter-box input.col-filter {
+      min-width: 44px;
+      flex: 1;
+      text-align: center;
+    }
     td {
-      padding: 8px 10px;
+      padding: 8px 8px;
       border: 1px solid #e2e8f0;
       white-space: nowrap;
       color: #1e293b;
     }
-    td.num-col {
-      text-align: right;
+
+    /* Compact width & center alignment for SL, Unit, Quantity, Indent No., ERP Issue Num */
+    th.col-sl, td.col-sl {
+      width: 55px;
+      max-width: 55px;
+      text-align: center;
     }
+    th.col-unit, td.col-unit {
+      width: 72px;
+      max-width: 72px;
+      text-align: center;
+    }
+    th.col-qty, td.col-qty {
+      width: 112px;
+      max-width: 112px;
+      text-align: center;
+    }
+    th.col-indent, td.col-indent {
+      width: 95px;
+      max-width: 95px;
+      text-align: center;
+    }
+    th.col-erp, td.col-erp {
+      width: 95px;
+      max-width: 95px;
+      text-align: center;
+    }
+    th.col-remarks, td.col-remarks {
+      min-width: 190px;
+      width: 210px;
+    }
+    th.col-sl .col-title,
+    th.col-unit .col-title,
+    th.col-qty .col-title,
+    th.col-indent .col-title,
+    th.col-erp .col-title {
+      text-align: center;
+    }
+    th.col-indent input.col-filter,
+    th.col-unit input.col-filter,
+    th.col-erp input.col-filter {
+      text-align: center;
+    }
+
     tbody tr:nth-child(even) {
       background-color: #f8fafc;
     }
@@ -171,6 +247,25 @@
       font-size: 15px;
       color: #64748b;
     }
+    .back-wrap {
+      max-width: 1500px;
+      margin: 16px auto 0;
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-radius: 6px;
+      background-color: #2563eb;
+      color: #ffffff;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .back-btn:hover {
+      background-color: #1d4ed8;
+    }
   </style>
 </head>
 <body>
@@ -200,11 +295,12 @@
     <div class="page-buttons" id="paginationControls"></div>
   </div>
 </div>
-  <div class="max-w-[1500px] mx-auto mt-4">
-    <a href="index.html" class="inline-flex items-center gap-3 px-4 py-2.5 rounded bg-blue-600 hover:bg-blue-700 text-white font-medium transition" id="back">
-      <i class="fa-solid fa-chart-pie w-5"></i> Back
-    </a>
-  </div>
+
+<div class="back-wrap">
+  <a href="index.html" class="back-btn" id="back">
+    <i class="fa-solid fa-chart-pie"></i> Back
+  </a>
+</div>
 
 <!-- Firebase Modular SDK -->
 <script type="module">
@@ -228,7 +324,6 @@
   const NODE_NAME = "stock_issue";
   const ROWS_PER_PAGE = 100;
 
-  // Required Columns in exact order
   const COLUMNS = [
     "SL",
     "Date",
@@ -243,17 +338,26 @@
     "Remarks"
   ];
 
-  // Flexible key matching for Firebase fields
+  const COLUMN_CLASSES = {
+    "SL": "col-sl",
+    "Date": "col-date",
+    "Unit": "col-unit",
+    "Quantity": "col-qty",
+    "Indent No.": "col-indent",
+    "ERP Issue Num": "col-erp",
+    "Remarks": "col-remarks"
+  };
+
   const FIELD_ALIASES = {
     "Date": ["date", "issuedate", "issue_date", "createdat", "timestamp"],
-    "Issu Num": ["issunum", "issu_num", "issuenum", "issue_num", "issueno", "issue_no", "issuenumber", "issue_number"],
-    "Item": ["item", "itemname", "item_name", "material", "product", "description", "partname", "part_name"],
+    "Issu Num": ["issueNo", "issueno", "issunum", "issu_num", "issuenum", "issue_num", "issue_no", "issuenumber", "issue_number"],
+    "Item": ["itemName", "itemname", "item", "item_name", "material", "product", "description", "partname", "part_name"],
     "Unit": ["unit", "uom", "units"],
     "Quantity": ["quantity", "qty", "issueqty", "issue_qty", "issuedqty", "issued_qty"],
-    "Equipment": ["equipment", "equipmentname", "equipment_name", "machine", "vehicle", "asset"],
+    "Equipment": ["equipment", "equipmentNo", "equipmentno", "equipmentName", "equipment_name", "machine", "vehicle", "asset"],
     "Receiver": ["receiver", "receivedby", "received_by", "issuedto", "issued_to", "person", "recipient"],
-    "Indent No.": ["indentno", "indent_no", "indentnum", "indent_num", "indent", "requisitionno", "requisition_no"],
-    "ERP Issue Num": ["erpissuenum", "erp_issue_num", "erpissueno", "erp_issue_no", "erpno", "erp_no", "erpissue", "erp_issue"],
+    "Indent No.": ["indent", "indentNo", "indentno", "indent_no", "indentnum", "indent_num", "requisitionno", "requisition_no"],
+    "ERP Issue Num": ["erpIssue", "erpissue", "erpIssueNo", "erpissueno", "erpIssueNum", "erpissuenum", "erp_issue_num", "erp_issue_no", "erpno", "erp_no", "erp_issue"],
     "Remarks": ["remarks", "remark", "note", "notes", "comment", "comments"]
   };
 
@@ -262,6 +366,8 @@
   let allRows = [];
   let filteredRows = [];
   let columnFilters = {};
+  let qtyOperator = ">";
+  let dateSortDesc = true;
   let currentPage = 1;
 
   const tableHead = document.getElementById("tableHead");
@@ -271,26 +377,55 @@
   const pageInfoEl = document.getElementById("pageInfo");
   const paginationControls = document.getElementById("paginationControls");
 
-  // Helper to get value regardless of key case or underscore/space differences
-  function extractField(record, colName) {
+  function normalizeKey(str) {
+    return String(str || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  }
+
+  function extractField(record, colName, index = null, allowUnsuffixedFallback = true) {
     if (!record || typeof record !== "object") return "";
     const aliases = FIELD_ALIASES[colName] || [colName.toLowerCase()];
+    const normAliases = aliases.map(normalizeKey);
 
-    // Direct or normalized match
+    if (index !== null && index !== undefined) {
+      const targetSuffix = `_${index}`;
+      for (const [key, val] of Object.entries(record)) {
+        if (!key.endsWith(targetSuffix)) continue;
+        const baseKey = key.slice(0, -targetSuffix.length);
+        if (normAliases.includes(normalizeKey(baseKey))) {
+          return val !== null && val !== undefined ? val : "";
+        }
+      }
+      if (!allowUnsuffixedFallback) return "";
+    }
+
     for (const [key, val] of Object.entries(record)) {
-      const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]/g, "");
-      if (aliases.some(alias => alias.replace(/[^a-z0-9]/g, "") === normalizedKey)) {
+      if (normAliases.includes(normalizeKey(key))) {
         return val !== null && val !== undefined ? val : "";
       }
     }
     return "";
   }
 
-  // Parse various date formats into a Date object for accurate sorting
+  function getItemIndices(record) {
+    const indices = new Set();
+    const itemAliases = (FIELD_ALIASES["Item"] || []).map(normalizeKey);
+
+    for (const key of Object.keys(record)) {
+      const match = key.match(/^(.+?)_(\d+)$/);
+      if (match) {
+        const baseNorm = normalizeKey(match[1]);
+        if (itemAliases.includes(baseNorm)) {
+          indices.add(parseInt(match[2], 10));
+        }
+      }
+    }
+
+    return Array.from(indices).sort((a, b) => a - b);
+  }
+
   function parseDateValue(rawDate) {
     if (!rawDate && rawDate !== 0) return null;
 
-    // Timestamp in milliseconds or seconds
     if (typeof rawDate === "number") {
       return new Date(rawDate < 1e12 ? rawDate * 1000 : rawDate);
     }
@@ -298,7 +433,6 @@
     const str = String(rawDate).trim();
     if (!str) return null;
 
-    // Handle DD-MM-YYYY or DD/MM/YYYY
     const dmyMatch = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
     if (dmyMatch) {
       const day = parseInt(dmyMatch[1], 10);
@@ -308,7 +442,6 @@
       if (!isNaN(d.getTime())) return d;
     }
 
-    // Handle YYYY-MM-DD
     const ymdMatch = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
     if (ymdMatch) {
       const year = parseInt(ymdMatch[1], 10);
@@ -318,7 +451,6 @@
       if (!isNaN(d.getTime())) return d;
     }
 
-    // Standard JS Date parse (handles "23-Nov-2036", ISO strings, etc.)
     const parsed = new Date(str);
     if (!isNaN(parsed.getTime())) {
       return parsed;
@@ -327,7 +459,6 @@
     return null;
   }
 
-  // Format Date object into "23-Nov-2036" (DD-MMM-YYYY)
   function formatDateDDMMMYYYY(dateObj, fallbackRaw) {
     if (!dateObj || isNaN(dateObj.getTime())) {
       return fallbackRaw !== undefined && fallbackRaw !== null ? String(fallbackRaw) : "";
@@ -338,31 +469,124 @@
     return `${day}-${month}-${year}`;
   }
 
-  // Render Table Headers with Column Search Inputs
+  function sortRowsByDate(rows) {
+    rows.sort((a, b) => {
+      const tsA = Number.isFinite(a._timestamp) ? a._timestamp : (dateSortDesc ? -Infinity : Infinity);
+      const tsB = Number.isFinite(b._timestamp) ? b._timestamp : (dateSortDesc ? -Infinity : Infinity);
+      return dateSortDesc ? (tsB - tsA) : (tsA - tsB);
+    });
+    rows.forEach((row, idx) => {
+      row["SL"] = idx + 1;
+    });
+  }
+
+  function matchesQuantityFilter(rawCellVal, rawInputVal, selectedOp) {
+    const inputStr = String(rawInputVal || "").trim();
+    if (!inputStr) return true;
+
+    const cellNum = parseFloat(String(rawCellVal ?? "").replace(/,/g, "").trim());
+    if (isNaN(cellNum)) return false;
+
+    const inlineOpMatch = inputStr.match(/^(>=|<=|!=|<>|>|<|=+)\s*(-?\d+(?:\.\d+)?)$/);
+    const op = inlineOpMatch ? inlineOpMatch[1] : selectedOp;
+    const targetStr = inlineOpMatch ? inlineOpMatch[2] : inputStr;
+    const targetNum = parseFloat(targetStr);
+
+    if (isNaN(targetNum)) {
+      return String(rawCellVal ?? "").toLowerCase().includes(inputStr.toLowerCase());
+    }
+
+    if (op === ">") return cellNum > targetNum;
+    if (op === "<") return cellNum < targetNum;
+    if (op === ">=") return cellNum >= targetNum;
+    if (op === "<=") return cellNum <= targetNum;
+    if (op === "!=" || op === "<>") return cellNum !== targetNum;
+    return cellNum === targetNum;
+  }
+
   function renderTableHeader() {
     const tr = document.createElement("tr");
 
     COLUMNS.forEach((col) => {
       const th = document.createElement("th");
+      if (COLUMN_CLASSES[col]) {
+        th.className = COLUMN_CLASSES[col];
+      }
 
       const titleSpan = document.createElement("span");
       titleSpan.className = "col-title";
-      titleSpan.textContent = col;
-
-      const input = document.createElement("input");
-      input.type = "text";
-      input.className = "col-filter";
-      input.placeholder = `Search ${col}...`;
-      input.value = columnFilters[col] || "";
-
-      input.addEventListener("input", (e) => {
-        columnFilters[col] = e.target.value.trim().toLowerCase();
-        currentPage = 1;
-        applyFilters();
-      });
-
+      if (col === "Date") {
+        titleSpan.textContent = dateSortDesc ? "Date ↓" : "Date ↑";
+        titleSpan.title = "Click to toggle Date sort";
+        titleSpan.addEventListener("click", () => {
+          dateSortDesc = !dateSortDesc;
+          titleSpan.textContent = dateSortDesc ? "Date ↓" : "Date ↑";
+          sortRowsByDate(allRows);
+          currentPage = 1;
+          applyFilters();
+        });
+      } else {
+        titleSpan.textContent = col;
+      }
       th.appendChild(titleSpan);
-      th.appendChild(input);
+
+      if (col === "Quantity") {
+        const box = document.createElement("div");
+        box.className = "qty-filter-box";
+
+        const select = document.createElement("select");
+        select.className = "qty-op-select";
+        select.setAttribute("aria-label", "Quantity comparison operator");
+
+        const optGt = document.createElement("option");
+        optGt.value = ">";
+        optGt.textContent = ">";
+
+        const optLt = document.createElement("option");
+        optLt.value = "<";
+        optLt.textContent = "<";
+
+        select.appendChild(optGt);
+        select.appendChild(optLt);
+        select.value = qtyOperator;
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.className = "col-filter";
+        input.setAttribute("aria-label", "Filter Quantity");
+        input.value = columnFilters[col] || "";
+
+        select.addEventListener("change", (e) => {
+          qtyOperator = e.target.value;
+          currentPage = 1;
+          applyFilters();
+        });
+
+        input.addEventListener("input", (e) => {
+          columnFilters[col] = e.target.value;
+          currentPage = 1;
+          applyFilters();
+        });
+
+        box.appendChild(select);
+        box.appendChild(input);
+        th.appendChild(box);
+      } else if (col !== "SL") {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.className = "col-filter";
+        input.setAttribute("aria-label", `Filter ${col}`);
+        input.value = columnFilters[col] || "";
+
+        input.addEventListener("input", (e) => {
+          columnFilters[col] = e.target.value.trim();
+          currentPage = 1;
+          applyFilters();
+        });
+
+        th.appendChild(input);
+      }
+
       tr.appendChild(th);
     });
 
@@ -370,7 +594,6 @@
     tableHead.appendChild(tr);
   }
 
-  // Fetch Data from Firebase Realtime Database
   renderTableHeader();
   const stockIssueRef = ref(db, NODE_NAME);
 
@@ -395,33 +618,60 @@
       const parsedDate = parseDateValue(rawDate);
       const formattedDate = formatDateDDMMMYYYY(parsedDate, rawDate);
 
-      // Fallback to Firebase recordId if Issu Num field is empty
       let issuNum = extractField(recordValue, "Issu Num");
       if (issuNum === "") issuNum = recordId;
 
-      parsedRows.push({
-        _timestamp: parsedDate ? parsedDate.getTime() : -Infinity,
-        "SL": 0, // Assigned after sorting
-        "Date": formattedDate,
-        "Issu Num": issuNum,
-        "Item": extractField(recordValue, "Item"),
-        "Unit": extractField(recordValue, "Unit"),
-        "Quantity": extractField(recordValue, "Quantity"),
-        "Equipment": extractField(recordValue, "Equipment"),
-        "Receiver": extractField(recordValue, "Receiver"),
-        "Indent No.": extractField(recordValue, "Indent No."),
-        "ERP Issue Num": extractField(recordValue, "ERP Issue Num"),
-        "Remarks": extractField(recordValue, "Remarks")
-      });
+      const baseEquipment = extractField(recordValue, "Equipment");
+      const receiver = extractField(recordValue, "Receiver");
+      const indentNo = extractField(recordValue, "Indent No.");
+      const baseErpIssueNum = extractField(recordValue, "ERP Issue Num");
+      const baseRemarks = extractField(recordValue, "Remarks");
+
+      const itemIndices = getItemIndices(recordValue);
+
+      if (itemIndices.length > 0) {
+        for (const idx of itemIndices) {
+          const itemName = extractField(recordValue, "Item", idx, false);
+          const unit = extractField(recordValue, "Unit", idx, true);
+          const quantity = extractField(recordValue, "Quantity", idx, false);
+          const rowEquipment = extractField(recordValue, "Equipment", idx, false) || baseEquipment;
+          const rowErpIssueNum = extractField(recordValue, "ERP Issue Num", idx, false) || baseErpIssueNum;
+          const rowRemarks = extractField(recordValue, "Remarks", idx, false) || baseRemarks;
+
+          parsedRows.push({
+            _timestamp: parsedDate ? parsedDate.getTime() : NaN,
+            "SL": 0,
+            "Date": formattedDate,
+            "Issu Num": issuNum,
+            "Item": itemName,
+            "Unit": unit,
+            "Quantity": quantity,
+            "Equipment": rowEquipment,
+            "Receiver": receiver,
+            "Indent No.": indentNo,
+            "ERP Issue Num": rowErpIssueNum,
+            "Remarks": rowRemarks
+          });
+        }
+      } else {
+        parsedRows.push({
+          _timestamp: parsedDate ? parsedDate.getTime() : NaN,
+          "SL": 0,
+          "Date": formattedDate,
+          "Issu Num": issuNum,
+          "Item": extractField(recordValue, "Item"),
+          "Unit": extractField(recordValue, "Unit"),
+          "Quantity": extractField(recordValue, "Quantity"),
+          "Equipment": baseEquipment,
+          "Receiver": receiver,
+          "Indent No.": indentNo,
+          "ERP Issue Num": baseErpIssueNum,
+          "Remarks": baseRemarks
+        });
+      }
     }
 
-    // Sort Descending by Date (Newest first)
-    parsedRows.sort((a, b) => b._timestamp - a._timestamp);
-
-    // Assign Sequential SL after descending sort
-    parsedRows.forEach((row, idx) => {
-      row["SL"] = idx + 1;
-    });
+    sortRowsByDate(parsedRows);
 
     allRows = parsedRows;
     applyFilters();
@@ -430,15 +680,25 @@
     tableBody.innerHTML = `<tr><td colspan="${COLUMNS.length}" class="status-msg" style="color:#dc2626;">Error loading data: ${error.message}</td></tr>`;
   });
 
-  // Apply Column-by-Column Filtering
   function applyFilters() {
     filteredRows = allRows.filter((row) => {
       return COLUMNS.every((col) => {
-        const filterVal = columnFilters[col];
+        if (col === "SL") return true;
+        const filterVal = String(columnFilters[col] ?? "").trim();
         if (!filterVal) return true;
+
+        if (col === "Quantity") {
+          return matchesQuantityFilter(row[col], filterVal, qtyOperator);
+        }
+
         const cellVal = row[col] !== undefined && row[col] !== null ? String(row[col]).toLowerCase() : "";
-        return cellVal.includes(filterVal);
+        return cellVal.includes(filterVal.toLowerCase());
       });
+    });
+
+    // Re-assign sequential SL (1, 2, 3, 4...) for filtered results
+    filteredRows.forEach((row, idx) => {
+      row["SL"] = idx + 1;
     });
 
     const totalPages = Math.max(1, Math.ceil(filteredRows.length / ROWS_PER_PAGE));
@@ -449,7 +709,6 @@
     renderPagination();
   }
 
-  // Render Table Rows (100 rows per page)
   function renderTableBody() {
     if (filteredRows.length === 0) {
       tableBody.innerHTML = `<tr><td colspan="${COLUMNS.length}" class="status-msg">No matching records found.</td></tr>`;
@@ -462,14 +721,16 @@
 
     const fragment = document.createDocumentFragment();
 
-    pageRows.forEach((row) => {
+    pageRows.forEach((row, idx) => {
       const tr = document.createElement("tr");
       COLUMNS.forEach((col) => {
         const td = document.createElement("td");
-        if (col === "Quantity") {
-          td.className = "num-col";
+        if (COLUMN_CLASSES[col]) {
+          td.className = COLUMN_CLASSES[col];
         }
-        td.textContent = row[col] !== undefined && row[col] !== null ? row[col] : "";
+        td.textContent = col === "SL"
+          ? (startIdx + idx + 1)
+          : (row[col] !== undefined && row[col] !== null ? row[col] : "");
         tr.appendChild(td);
       });
       fragment.appendChild(tr);
@@ -479,7 +740,6 @@
     tableBody.appendChild(fragment);
   }
 
-  // Render Pagination Controls
   function renderPagination() {
     const totalRows = filteredRows.length;
     const totalPages = Math.ceil(totalRows / ROWS_PER_PAGE);
@@ -546,15 +806,15 @@
     filteredCountEl.textContent = `Filtered: ${filteredRows.length}`;
   }
 
-  // Reset All Column Filters
   document.getElementById("resetFiltersBtn").addEventListener("click", () => {
     columnFilters = {};
+    qtyOperator = ">";
     document.querySelectorAll(".col-filter").forEach(input => input.value = "");
+    document.querySelectorAll(".qty-op-select").forEach(sel => sel.value = ">");
     currentPage = 1;
     applyFilters();
   });
 
-  // Export Filtered Data to CSV
   document.getElementById("exportCsvBtn").addEventListener("click", () => {
     if (filteredRows.length === 0) {
       alert("No data available to export!");
@@ -563,9 +823,10 @@
     const csvRows = [];
     csvRows.push(COLUMNS.map(col => `"${String(col).replace(/"/g, '""')}"`).join(","));
 
-    filteredRows.forEach(row => {
+    filteredRows.forEach((row, idx) => {
       const values = COLUMNS.map(col => {
-        const val = row[col] !== undefined && row[col] !== null ? String(row[col]) : "";
+        const rawVal = col === "SL" ? (idx + 1) : row[col];
+        const val = rawVal !== undefined && rawVal !== null ? String(rawVal) : "";
         return `"${val.replace(/"/g, '""')}"`;
       });
       csvRows.push(values.join(","));
