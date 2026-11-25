@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Transfer Receive Module</title>
   <style>
-    * {
+    *, *::before, *::after {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
@@ -165,7 +165,7 @@
       border-color: #dc2626;
     }
 
-    /* Floating Searchable Dropdown Menu */
+    /* Floating Custom Searchable Dropdown Menu */
     .floating-dropdown {
       position: fixed;
       z-index: 999999;
@@ -173,7 +173,7 @@
       border: 1px solid #94a3b8;
       border-radius: 6px;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
-      max-height: 240px;
+      max-height: 260px;
       overflow-y: auto;
       display: none;
     }
@@ -183,7 +183,7 @@
     }
 
     .dropdown-option {
-      padding: 8px 10px;
+      padding: 8px 12px;
       font-size: 13px;
       color: #111827;
       cursor: pointer;
@@ -191,7 +191,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
     }
 
     .dropdown-option:last-child {
@@ -200,9 +200,31 @@
 
     .dropdown-option-label {
       flex: 1;
+      font-weight: 500;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    .dropdown-badges {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .dropdown-stock-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background-color: #dcfce7;
+      color: #166534;
+    }
+
+    .dropdown-stock-badge.zero {
+      background-color: #fee2e2;
+      color: #991b1b;
     }
 
     .dropdown-unit-badge {
@@ -212,7 +234,6 @@
       border-radius: 4px;
       background-color: #e0e7ff;
       color: #1e40af;
-      flex-shrink: 0;
       letter-spacing: 0.3px;
     }
 
@@ -223,16 +244,11 @@
     }
 
     .dropdown-option:hover .dropdown-unit-badge,
-    .dropdown-option.active .dropdown-unit-badge {
+    .dropdown-option.active .dropdown-unit-badge,
+    .dropdown-option:hover .dropdown-stock-badge,
+    .dropdown-option.active .dropdown-stock-badge {
       background-color: rgba(255, 255, 255, 0.22);
       color: #ffffff;
-    }
-
-    .dropdown-empty {
-      padding: 8px 10px;
-      font-size: 12px;
-      color: #6b7280;
-      font-style: italic;
     }
 
     /* Bottom Submit Button */
@@ -247,7 +263,7 @@
       color: #ffffff;
       border: none;
       border-radius: 6px;
-      padding: 10px 32px;
+      padding: 10px 36px;
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
@@ -257,6 +273,11 @@
 
     .submit-btn:hover {
       background-color: #1e40af;
+    }
+
+    .submit-btn:disabled {
+      background-color: #93c5fd;
+      cursor: not-allowed;
     }
 
     /* Toast Notification */
@@ -290,7 +311,7 @@
       background-color: #15803d;
     }
 
-    /* JSON Preview Modal */
+    /* Success Modal */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -308,62 +329,62 @@
 
     .modal-box {
       background: #ffffff;
-      border-radius: 8px;
+      border-radius: 10px;
       width: 100%;
-      max-width: 720px;
-      max-height: 85vh;
-      display: flex;
-      flex-direction: column;
+      max-width: 420px;
       overflow: hidden;
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+      text-align: center;
     }
 
-    .modal-header {
-      padding: 14px 18px;
-      border-bottom: 1px solid #e5e7eb;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    .modal-header-success {
+      background-color: #15803d;
+      color: #ffffff;
+      padding: 18px 20px;
       font-weight: 700;
-      font-size: 15px;
+      font-size: 17px;
     }
 
-    .modal-body {
-      padding: 16px;
-      overflow: auto;
-      background: #0f172a;
-      color: #e2e8f0;
+    .modal-body-success {
+      padding: 24px 20px;
+      color: #1f2937;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .trn-rece-badge {
+      display: inline-block;
+      margin-top: 12px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 12px;
-      white-space: pre;
+      font-size: 16px;
+      font-weight: 700;
+      color: #1d4ed8;
+      background: #eff6ff;
+      padding: 8px 18px;
+      border-radius: 6px;
+      border: 1px solid #bfdbfe;
+      letter-spacing: 0.4px;
     }
 
     .modal-footer {
-      padding: 12px 18px;
-      border-top: 1px solid #e5e7eb;
+      padding: 10px 20px 20px;
       display: flex;
-      justify-content: flex-end;
-      gap: 10px;
+      justify-content: center;
     }
 
-    .btn-secondary {
-      padding: 7px 14px;
-      font-size: 13px;
-      border: 1px solid #cbd5e1;
-      background: #ffffff;
-      color: #1f2937;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .btn-copy {
-      padding: 7px 14px;
-      font-size: 13px;
+    .btn-ok {
+      padding: 8px 32px;
+      font-size: 14px;
+      font-weight: 600;
       border: none;
-      background: #2563eb;
+      background: #15803d;
       color: #ffffff;
-      border-radius: 5px;
+      border-radius: 6px;
       cursor: pointer;
+    }
+
+    .btn-ok:hover {
+      background: #166534;
     }
   </style>
 </head>
@@ -377,7 +398,7 @@
         <input type="date" id="receivedDate" class="header-input" />
 
         <label class="header-label" for="projectName">Project name</label>
-        <input type="text" id="projectName" class="header-input" />
+        <input type="text" id="projectName" class="header-input" data-dropdown="project" autocomplete="off" />
 
         <label class="header-label" for="gatePassNo">Gate pass no</label>
         <input type="text" id="gatePassNo" class="header-input" />
@@ -399,7 +420,7 @@
         <thead>
           <tr>
             <th class="center" style="width: 50px;">SL</th>
-            <th style="min-width: 190px;">Item name *</th>
+            <th style="min-width: 220px;">Item name *</th>
             <th style="min-width: 110px;">Unit *</th>
             <th style="min-width: 105px;">Quantity *</th>
             <th style="min-width: 150px;">For User *</th>
@@ -419,60 +440,69 @@
     </div>
   </div>
 
-  <!-- Global Top-Layer Searchable Dropdown -->
+  <!-- Global Top-Layer Custom Searchable Dropdown -->
   <div id="floatingDropdown" class="floating-dropdown" role="listbox"></div>
 
   <!-- Toast Message -->
   <div id="toast" class="toast"></div>
 
-  <!-- JSON Payload Modal -->
-  <div id="jsonModal" class="modal-backdrop">
+  <!-- Success Modal -->
+  <div id="successModal" class="modal-backdrop">
     <div class="modal-box">
-      <div class="modal-header">
-        <span>Transfer Receive Payload (JSON)</span>
-        <button type="button" id="closeModalBtn" class="btn-secondary">Close</button>
+      <div class="modal-header-success">
+        &#10004; Saved Successfully
       </div>
-      <div id="jsonOutput" class="modal-body"></div>
+      <div class="modal-body-success">
+        <div>Transfer Receive data saved and stock summary updated.</div>
+        <div id="trnReceNoBadge" class="trn-rece-badge">TRN_RECE_NO: 26000001</div>
+      </div>
       <div class="modal-footer">
-        <button type="button" id="copyJsonBtn" class="btn-copy">Copy JSON</button>
+        <button type="button" id="closeSuccessModalBtn" class="btn-ok">OK</button>
       </div>
     </div>
   </div>
 
+  <!-- Firebase Compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
   <script>
-    // Stock / Last-Received unit mapped per Item Name
-    // Shown on the right side of the Item when searching, and auto-set in Unit on selection
-    const ITEM_DEFAULT_UNIT = {
-      "Gear Oil": "DRUM",
-      "Gear Oil 80W-90": "PAIL",
-      "Engine Oil 15W-40": "DRUM",
-      "Hydraulic Oil": "LTR",
-      "Hydraulic Pump": "PCS",
-      "Excavator Bucket": "PCS",
-      "Air Filter Element": "PCS",
-      "Fuel Filter Assembly": "PCS",
-      "Hydraulic Hose Pipe": "MTR",
-      "Steel Bolt & Nut Set": "SET",
-      "Brake Pad Set": "SET",
-      "Alternator 24V": "PCS",
-      "Radiator Coolant": "LTR",
-      "Bearing Assembly": "PCS"
+    // Firebase Configuration
+    const defaultFirebaseConfig = {
+      apiKey: "AIzaSyCQV_4nv_ohzevtZRxLj3Aq4kVafVEiLKw",
+      authDomain: "tazul503.firebaseapp.com",
+      databaseURL: "https://tazul503-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "tazul503",
+      storageBucket: "tazul503.firebasestorage.app",
+      messagingSenderId: "190926921011",
+      appId: "1:190926921011:web:77822854066e6a840f3246"
     };
 
-    const ITEM_OPTIONS = Object.keys(ITEM_DEFAULT_UNIT);
-    const UNIT_OPTIONS = ["DRUM", "PAIL", "LTR", "PCS", "SET", "KG", "MTR", "BOX", "ROLL", "GAL"];
+    firebase.initializeApp(defaultFirebaseConfig);
+    const db = firebase.database();
+    const stockSummaryRef = db.ref("stock_summary");
+    const transferReceiveRef = db.ref("transfer_receive");
+
+    // Dynamic Stock List & Unique Project List from Firebase
+    let STOCK_ITEMS_LIST = [];
+    let STOCK_ITEMS_MAP = {}; // lowerCaseName -> { key, name, unit, stock }
+    let UNIQUE_PROJECT_NAMES = [];
+    let DYNAMIC_UNIT_OPTIONS = ["Nos", "DRUM", "PAIL", "LTR", "PCS", "SET", "KG", "MTR", "BOX", "ROLL", "GAL"];
 
     // Column indices:
     // 0: item_name, 1: unit, 2: quantity, 3: for_user, 4: physical_identification, 5: erp_trn_no, 6: remarks
-    const CASCADE_COPY_INDICES = [3, 4, 5, 6];
+    const INHERIT_ON_NEW_ROW_INDICES = [3, 4, 5, 6];
     const MANDATORY_INDICES = [0, 1, 2, 3];
 
     const headerInputs = Array.from(document.querySelectorAll(".header-card .header-input"));
+    const projectNameInput = document.getElementById("projectName");
     const tbody = document.getElementById("materialsBody");
     const floatingDropdown = document.getElementById("floatingDropdown");
     const toastEl = document.getElementById("toast");
-    const jsonModal = document.getElementById("jsonModal");
-    const jsonOutput = document.getElementById("jsonOutput");
+    const submitBtn = document.getElementById("submitBtn");
+    const successModal = document.getElementById("successModal");
+    const trnReceNoBadge = document.getElementById("trnReceNoBadge");
+    const closeSuccessModalBtn = document.getElementById("closeSuccessModalBtn");
 
     let activeDropdownState = {
       inputEl: null,
@@ -488,6 +518,85 @@
       showToast._timer = setTimeout(() => {
         toastEl.className = "toast";
       }, 2800);
+    }
+
+    function sanitizeFirebaseKey(name) {
+      return name.trim().replace(/[.#$[\]/]/g, "_");
+    }
+
+    // Listen in real-time to `stock_summary` to populate custom Item & Unit dropdowns + Stock count
+    function initStockSummaryListener() {
+      stockSummaryRef.on("value", (snapshot) => {
+        const data = snapshot.val();
+        const items = [];
+        const map = {};
+        const unitSet = new Set(["Nos", "DRUM", "PAIL", "LTR", "PCS", "SET", "KG", "MTR", "BOX", "ROLL", "GAL"]);
+
+        if (data && typeof data === "object") {
+          Object.entries(data).forEach(([nodeKey, entry]) => {
+            if (!entry || typeof entry !== "object") return;
+            const itemName = (entry.name || nodeKey || "").toString().trim();
+            if (!itemName) return;
+
+            const itemUnit = (entry.unit || "Nos").toString().trim();
+            const itemStock = Number(entry.stock) || 0;
+
+            const record = {
+              key: nodeKey,
+              name: itemName,
+              unit: itemUnit,
+              stock: itemStock
+            };
+
+            items.push(record);
+            map[itemName.toLowerCase()] = record;
+            if (itemUnit) unitSet.add(itemUnit);
+          });
+        }
+
+        items.sort((a, b) => a.name.localeCompare(b.name));
+        STOCK_ITEMS_LIST = items;
+        STOCK_ITEMS_MAP = map;
+        DYNAMIC_UNIT_OPTIONS = Array.from(unitSet);
+
+        if (floatingDropdown.classList.contains("open") && activeDropdownState.inputEl) {
+          openDropdownForInput(activeDropdownState.inputEl, activeDropdownState.type);
+        }
+      }, (err) => {
+        console.error("Firebase stock_summary read error:", err);
+        showToast("Failed to load stock summary list.", "error");
+      });
+    }
+
+    // Listen in real-time to `transfer_receive` to collect unique `project_name` values
+    function initProjectNamesListener() {
+      transferReceiveRef.on("value", (snapshot) => {
+        const data = snapshot.val();
+        const projectMap = new Map(); // lowercase -> original trimmed name
+
+        if (data && typeof data === "object") {
+          Object.values(data).forEach((entry) => {
+            if (!entry || typeof entry !== "object") return;
+            const proj = (entry.project_name || "").toString().trim();
+            if (proj && !projectMap.has(proj.toLowerCase())) {
+              projectMap.set(proj.toLowerCase(), proj);
+            }
+          });
+        }
+
+        UNIQUE_PROJECT_NAMES = Array.from(projectMap.values()).sort((a, b) =>
+          a.localeCompare(b)
+        );
+
+        if (
+          floatingDropdown.classList.contains("open") &&
+          activeDropdownState.inputEl === projectNameInput
+        ) {
+          openDropdownForInput(projectNameInput, "project");
+        }
+      }, (err) => {
+        console.error("Firebase transfer_receive read error:", err);
+      });
     }
 
     function focusPassive(el) {
@@ -506,11 +615,61 @@
     }
 
     function handleHeaderKeyDown(e) {
-      const idx = headerInputs.indexOf(e.currentTarget);
+      const input = e.currentTarget;
+      const idx = headerInputs.indexOf(input);
       if (idx === -1) return;
+
+      const isProjectDropdownOpen =
+        input === projectNameInput &&
+        floatingDropdown.classList.contains("open") &&
+        activeDropdownState.inputEl === projectNameInput;
+
+      if (isProjectDropdownOpen) {
+        const list = activeDropdownState.filteredList;
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          if (list.length > 0) {
+            activeDropdownState.highlightedIndex =
+              (activeDropdownState.highlightedIndex + 1) % list.length;
+            renderDropdownOptions();
+            positionFloatingDropdown(input);
+          }
+          return;
+        }
+        if (e.key === "ArrowUp") {
+          e.preventDefault();
+          if (list.length > 0) {
+            activeDropdownState.highlightedIndex =
+              (activeDropdownState.highlightedIndex - 1 + list.length) % list.length;
+            renderDropdownOptions();
+            positionFloatingDropdown(input);
+          }
+          return;
+        }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          if (list.length > 0 && activeDropdownState.highlightedIndex >= 0) {
+            selectDropdownOption(list[activeDropdownState.highlightedIndex].value);
+          } else {
+            closeDropdown();
+          }
+          if (idx < headerInputs.length - 1) {
+            focusPassive(headerInputs[idx + 1]);
+          } else {
+            focusFirstTableCell();
+          }
+          return;
+        }
+        if (e.key === "Escape") {
+          e.preventDefault();
+          closeDropdown();
+          return;
+        }
+      }
 
       if (e.key === "Enter") {
         e.preventDefault();
+        closeDropdown();
         if (idx < headerInputs.length - 1) {
           focusPassive(headerInputs[idx + 1]);
         } else {
@@ -520,11 +679,11 @@
       }
 
       if (e.key === "ArrowDown") {
+        e.preventDefault();
+        closeDropdown();
         if (idx < headerInputs.length - 1) {
-          e.preventDefault();
           focusPassive(headerInputs[idx + 1]);
         } else {
-          e.preventDefault();
           focusFirstTableCell();
         }
         return;
@@ -533,24 +692,25 @@
       if (e.key === "ArrowUp") {
         if (idx > 0) {
           e.preventDefault();
+          closeDropdown();
           focusPassive(headerInputs[idx - 1]);
         }
         return;
       }
 
-      if (e.key === "ArrowRight" && e.currentTarget.type === "text") {
-        const el = e.currentTarget;
-        if (el.selectionStart === el.value.length && idx < headerInputs.length - 1) {
+      if (e.key === "ArrowRight" && input.type === "text") {
+        if (input.selectionStart === input.value.length && idx < headerInputs.length - 1) {
           e.preventDefault();
+          closeDropdown();
           focusPassive(headerInputs[idx + 1]);
         }
         return;
       }
 
-      if (e.key === "ArrowLeft" && e.currentTarget.type === "text") {
-        const el = e.currentTarget;
-        if (el.selectionEnd === 0 && idx > 0) {
+      if (e.key === "ArrowLeft" && input.type === "text") {
+        if (input.selectionEnd === 0 && idx > 0) {
           e.preventDefault();
+          closeDropdown();
           focusPassive(headerInputs[idx - 1]);
         }
         return;
@@ -561,23 +721,21 @@
       inp.addEventListener("keydown", handleHeaderKeyDown);
     });
 
-    function getStockOrReceivedUnit(itemName) {
-      if (!itemName) return "";
+    // Attach dropdown triggers to Project Name input
+    projectNameInput.addEventListener("input", () => {
+      openDropdownForInput(projectNameInput, "project");
+    });
+    projectNameInput.addEventListener("focus", () => {
+      openDropdownForInput(projectNameInput, "project");
+    });
+    projectNameInput.addEventListener("click", () => {
+      openDropdownForInput(projectNameInput, "project");
+    });
+
+    function findStockRecordByName(itemName) {
+      if (!itemName) return null;
       const trimmed = itemName.trim().toLowerCase();
-
-      for (const [key, unit] of Object.entries(ITEM_DEFAULT_UNIT)) {
-        if (key.toLowerCase() === trimmed) {
-          return unit;
-        }
-      }
-
-      for (const [key, unit] of Object.entries(ITEM_DEFAULT_UNIT)) {
-        if (key.toLowerCase().includes(trimmed) || trimmed.includes(key.toLowerCase())) {
-          return unit;
-        }
-      }
-
-      return "";
+      return STOCK_ITEMS_MAP[trimmed] || null;
     }
 
     function autoSetUnitForRow(tr, itemName) {
@@ -585,9 +743,9 @@
       const unitInput = inputs[1];
       if (!unitInput) return;
 
-      const matchedUnit = getStockOrReceivedUnit(itemName);
-      if (matchedUnit) {
-        unitInput.value = matchedUnit;
+      const record = findStockRecordByName(itemName);
+      if (record && record.unit) {
+        unitInput.value = record.unit;
         unitInput.classList.remove("invalid");
       }
     }
@@ -632,18 +790,18 @@
 
         input.addEventListener("input", () => {
           input.classList.remove("invalid");
-
-          const rowIndex = getRowIndex(tr);
           const colIndex = Number(input.dataset.col);
 
           if (colIndex === 0) {
             autoSetUnitForRow(tr, input.value);
           }
 
-          if (CASCADE_COPY_INDICES.includes(colIndex)) {
-            cascadeCopyToSubsequentRows(rowIndex, colIndex, input.value);
+          if (f.dropdownType) {
+            openDropdownForInput(input, f.dropdownType);
           }
+        });
 
+        input.addEventListener("focus", () => {
           if (f.dropdownType) {
             openDropdownForInput(input, f.dropdownType);
           }
@@ -710,23 +868,12 @@
       });
     }
 
-    function cascadeCopyToSubsequentRows(sourceRowIndex, colIndex, value) {
-      const rows = getAllRows();
-      for (let i = sourceRowIndex + 1; i < rows.length; i++) {
-        const inputs = getRowInputs(rows[i]);
-        if (inputs[colIndex]) {
-          inputs[colIndex].value = value;
-          inputs[colIndex].classList.remove("invalid");
-        }
-      }
-    }
-
     function getInheritedDefaultsFromLastRow() {
       const rows = getAllRows();
       const defaults = {};
       if (rows.length === 0) return defaults;
       const lastRowInputs = getRowInputs(rows[rows.length - 1]);
-      CASCADE_COPY_INDICES.forEach((colIdx) => {
+      INHERIT_ON_NEW_ROW_INDICES.forEach((colIdx) => {
         defaults[colIdx] = lastRowInputs[colIdx] ? lastRowInputs[colIdx].value : "";
       });
       return defaults;
@@ -770,7 +917,7 @@
       floatingDropdown.classList.add("open");
 
       const rect = inputEl.getBoundingClientRect();
-      const minWidth = Math.max(rect.width, 220);
+      const minWidth = Math.max(rect.width, 260);
       const maxLeft = Math.max(8, window.innerWidth - minWidth - 8);
       const left = Math.min(Math.max(8, rect.left), maxLeft);
 
@@ -791,23 +938,54 @@
     }
 
     function openDropdownForInput(inputEl, type) {
-      const sourceList = type === "item" ? ITEM_OPTIONS : UNIT_OPTIONS;
       const query = (inputEl.value || "").trim().toLowerCase();
+      let optionsWithMeta = [];
 
-      const filtered = query
-        ? sourceList.filter((item) => item.toLowerCase().includes(query))
-        : sourceList.slice();
+      if (type === "item") {
+        const filtered = query
+          ? STOCK_ITEMS_LIST.filter((item) => item.name.toLowerCase().includes(query))
+          : STOCK_ITEMS_LIST.slice();
 
-      const optionsWithMeta = filtered.map((val) => ({
-        value: val,
-        unitBadge: type === "item" ? (ITEM_DEFAULT_UNIT[val] || "") : ""
-      }));
+        optionsWithMeta = filtered.map((item) => ({
+          value: item.name,
+          unitBadge: item.unit,
+          stock: item.stock,
+          showStock: true
+        }));
+      } else if (type === "unit") {
+        const filteredUnits = query
+          ? DYNAMIC_UNIT_OPTIONS.filter((u) => u.toLowerCase().includes(query))
+          : DYNAMIC_UNIT_OPTIONS.slice();
+
+        optionsWithMeta = filteredUnits.map((u) => ({
+          value: u,
+          unitBadge: "",
+          stock: null,
+          showStock: false
+        }));
+      } else if (type === "project") {
+        const filteredProjects = query
+          ? UNIQUE_PROJECT_NAMES.filter((p) => p.toLowerCase().includes(query))
+          : UNIQUE_PROJECT_NAMES.slice();
+
+        optionsWithMeta = filteredProjects.map((p) => ({
+          value: p,
+          unitBadge: "",
+          stock: null,
+          showStock: false
+        }));
+      }
+
+      if (optionsWithMeta.length === 0) {
+        closeDropdown();
+        return;
+      }
 
       activeDropdownState = {
         inputEl,
         type,
         filteredList: optionsWithMeta,
-        highlightedIndex: optionsWithMeta.length > 0 ? 0 : -1
+        highlightedIndex: 0
       };
 
       renderDropdownOptions();
@@ -819,10 +997,7 @@
       const { filteredList, highlightedIndex, inputEl } = activeDropdownState;
 
       if (!filteredList.length) {
-        const emptyDiv = document.createElement("div");
-        emptyDiv.className = "dropdown-empty";
-        emptyDiv.textContent = "No matching options";
-        floatingDropdown.appendChild(emptyDiv);
+        closeDropdown();
         return;
       }
 
@@ -835,11 +1010,25 @@
         labelSpan.textContent = opt.value;
         div.appendChild(labelSpan);
 
-        if (opt.unitBadge) {
-          const badgeSpan = document.createElement("span");
-          badgeSpan.className = "dropdown-unit-badge";
-          badgeSpan.textContent = opt.unitBadge;
-          div.appendChild(badgeSpan);
+        if (opt.showStock || opt.unitBadge) {
+          const badgesWrap = document.createElement("span");
+          badgesWrap.className = "dropdown-badges";
+
+          if (opt.showStock) {
+            const stockSpan = document.createElement("span");
+            stockSpan.className = "dropdown-stock-badge" + (opt.stock <= 0 ? " zero" : "");
+            stockSpan.textContent = "Stock: " + opt.stock;
+            badgesWrap.appendChild(stockSpan);
+          }
+
+          if (opt.unitBadge) {
+            const badgeSpan = document.createElement("span");
+            badgeSpan.className = "dropdown-unit-badge";
+            badgeSpan.textContent = opt.unitBadge;
+            badgesWrap.appendChild(badgeSpan);
+          }
+
+          div.appendChild(badgesWrap);
         }
 
         div.addEventListener("mousedown", (e) => {
@@ -858,22 +1047,18 @@
     }
 
     function selectDropdownOption(value) {
-      const { inputEl } = activeDropdownState;
+      const { inputEl, type } = activeDropdownState;
       if (!inputEl) return;
 
       inputEl.value = value;
       inputEl.classList.remove("invalid");
 
-      const tr = inputEl.closest("tr");
-      const rowIndex = getRowIndex(tr);
-      const colIndex = Number(inputEl.dataset.col);
-
-      if (colIndex === 0) {
-        autoSetUnitForRow(tr, value);
-      }
-
-      if (CASCADE_COPY_INDICES.includes(colIndex)) {
-        cascadeCopyToSubsequentRows(rowIndex, colIndex, value);
+      if (type === "item") {
+        const tr = inputEl.closest("tr");
+        const colIndex = Number(inputEl.dataset.col);
+        if (tr && colIndex === 0) {
+          autoSetUnitForRow(tr, value);
+        }
       }
 
       closeDropdown();
@@ -886,14 +1071,6 @@
       activeDropdownState.highlightedIndex = -1;
     }
 
-    function moveToUnitColumn(currentTr) {
-      const inputs = getRowInputs(currentTr);
-      if (inputs[1]) {
-        focusPassive(inputs[1]);
-        openDropdownForInput(inputs[1], "unit");
-      }
-    }
-
     function insertRowDirectlyIfValid(currentTr) {
       if (!validateRowMandatory(currentTr)) {
         return;
@@ -903,6 +1080,45 @@
       const newTr = createRow(defaults);
       const newInputs = getRowInputs(newTr);
       focusPassive(newInputs[0]);
+    }
+
+    function handleEnterProgression(tr, rowIdx, colIdx) {
+      const inputs = getRowInputs(tr);
+
+      // First row: Enter moves sequentially across the entire row until the last column
+      if (rowIdx === 0) {
+        if (colIdx < inputs.length - 1) {
+          focusPassive(inputs[colIdx + 1]);
+        } else {
+          insertRowDirectlyIfValid(tr);
+        }
+        return;
+      }
+
+      // Second row onwards:
+      if (colIdx < 2) {
+        focusPassive(inputs[colIdx + 1]);
+        return;
+      }
+
+      if (colIdx === 2) {
+        const hasEmptyAfterQuantity = inputs
+          .slice(3)
+          .some((inp) => (inp.value || "").trim() === "");
+
+        if (hasEmptyAfterQuantity) {
+          focusPassive(inputs[3]);
+        } else {
+          insertRowDirectlyIfValid(tr);
+        }
+        return;
+      }
+
+      if (colIdx < inputs.length - 1) {
+        focusPassive(inputs[colIdx + 1]);
+      } else {
+        insertRowDirectlyIfValid(tr);
+      }
     }
 
     function handleCellKeyDown(e) {
@@ -944,11 +1160,7 @@
           } else {
             closeDropdown();
           }
-          if (colIdx === 0) {
-            moveToUnitColumn(tr);
-          } else {
-            insertRowDirectlyIfValid(tr);
-          }
+          handleEnterProgression(tr, rowIdx, colIdx);
           return;
         }
         if (e.key === "Escape") {
@@ -961,11 +1173,7 @@
       if (e.key === "Enter") {
         e.preventDefault();
         closeDropdown();
-        if (colIdx === 0) {
-          moveToUnitColumn(tr);
-        } else {
-          insertRowDirectlyIfValid(tr);
-        }
+        handleEnterProgression(tr, rowIdx, colIdx);
         return;
       }
 
@@ -1035,63 +1243,163 @@
       }
     });
 
-    document.getElementById("submitBtn").addEventListener("click", () => {
+    /**
+     * Generates ONE sequential Posting ID per submission:
+     * <2-digit year><6-digit zero-padded sequence> -> e.g. 26000001
+     */
+    async function generateSinglePostingId() {
+      const yearPrefix = String(new Date().getFullYear()).slice(-2); // e.g., "26"
+      const minIdNum = Number(yearPrefix + "000001"); // 26000001
+      const maxIdNum = Number(yearPrefix + "999999"); // 26999999
+
+      const snapshot = await transferReceiveRef.once("value");
+      const existingData = snapshot.val() || {};
+
+      let highestNum = minIdNum - 1;
+
+      Object.entries(existingData).forEach(([key, val]) => {
+        const candidates = [key, val && val.posting_id, val && val.trn_rece_no];
+        candidates.forEach((cand) => {
+          const str = String(cand || "").trim();
+          if (/^\d{8}$/.test(str) && str.startsWith(yearPrefix)) {
+            const num = Number(str);
+            if (num >= minIdNum && num <= maxIdNum && num > highestNum) {
+              highestNum = num;
+            }
+          }
+        });
+      });
+
+      return String(highestNum + 1);
+    }
+
+    // Update stock count in `stock_summary` node
+    async function updateStockSummaryForItem(itemName, unit, receivedQty) {
+      const existingRecord = findStockRecordByName(itemName);
+      const targetKey = existingRecord ? existingRecord.key : sanitizeFirebaseKey(itemName);
+      const itemRef = stockSummaryRef.child(targetKey);
+
+      await itemRef.transaction((current) => {
+        if (!current || typeof current !== "object") {
+          return {
+            name: itemName,
+            stock: receivedQty,
+            unit: unit
+          };
+        }
+        const prevStock = Number(current.stock) || 0;
+        return {
+          ...current,
+          name: current.name || itemName,
+          stock: prevStock + receivedQty,
+          unit: unit || current.unit || "Nos"
+        };
+      });
+    }
+
+    function resetFormAfterSubmit() {
+      headerInputs.forEach((inp) => {
+        inp.value = "";
+      });
+      const todayIso = new Date().toISOString().split("T")[0];
+      document.getElementById("receivedDate").value = todayIso;
+
+      tbody.innerHTML = "";
+      createRow();
+    }
+
+    // Submit Handler: Saves completely flattened fields directly inside `transfer_receive/<postingId>`
+    submitBtn.addEventListener("click", async () => {
       closeDropdown();
       const rows = getAllRows();
+      if (rows.length === 0) return;
+
       for (const r of rows) {
         if (!validateRowMandatory(r)) {
           return;
         }
       }
 
-      const payload = {
-        header: {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Saving...";
+
+      try {
+        const postingId = await generateSinglePostingId();
+
+        // Completely flat object directly under `transfer_receive/<postingId>` (no nested `items` object)
+        const flattenedPayload = {
+          trn_rece_no: postingId,
+          posting_id: postingId,
           received_date: document.getElementById("receivedDate").value,
           project_name: document.getElementById("projectName").value.trim(),
           gate_pass_no: document.getElementById("gatePassNo").value.trim(),
           gate_pass_date: document.getElementById("gatePassDate").value,
           ref_indent: document.getElementById("refIndent").value.trim(),
-          remarks: document.getElementById("headerRemarks").value.trim()
-        },
-        materials: rows.map((r, i) => {
+          remarks: document.getElementById("headerRemarks").value.trim(),
+          total_rows: rows.length,
+          created_at: firebase.database.ServerValue.TIMESTAMP
+        };
+
+        const stockUpdateQueue = [];
+
+        rows.forEach((r, idx) => {
+          const sl = idx + 1;
           const inp = getRowInputs(r);
-          return {
-            sl: i + 1,
-            item_name: inp[0].value.trim(),
-            unit: inp[1].value.trim(),
-            quantity: parseFloat(inp[2].value),
-            for_user: inp[3].value.trim(),
-            physical_identification: inp[4].value.trim(),
-            erp_trn_no: inp[5].value.trim(),
-            remarks: inp[6].value.trim()
-          };
-        })
-      };
+          const itemName = inp[0].value.trim();
+          const unit = inp[1].value.trim();
+          const quantity = parseFloat(inp[2].value);
+          const forUser = inp[3].value.trim();
+          const physicalId = inp[4].value.trim();
+          const erpTrnNo = inp[5].value.trim();
+          const rowRemarks = inp[6].value.trim();
 
-      jsonOutput.textContent = JSON.stringify(payload, null, 2);
-      jsonModal.classList.add("open");
-      showToast("Transfer Receive payload generated", "success");
-    });
+          // Flat keys directly under postingId (e.g., item_name_1, unit_1, quantity_1...)
+          flattenedPayload[`item_name_${sl}`] = itemName;
+          flattenedPayload[`unit_${sl}`] = unit;
+          flattenedPayload[`quantity_${sl}`] = quantity;
+          flattenedPayload[`for_user_${sl}`] = forUser;
+          flattenedPayload[`physical_identification_${sl}`] = physicalId;
+          flattenedPayload[`erp_trn_no_${sl}`] = erpTrnNo;
+          flattenedPayload[`remarks_${sl}`] = rowRemarks;
 
-    document.getElementById("closeModalBtn").addEventListener("click", () => {
-      jsonModal.classList.remove("open");
-    });
+          stockUpdateQueue.push({ itemName, unit, quantity });
+        });
 
-    jsonModal.addEventListener("click", (e) => {
-      if (e.target === jsonModal) {
-        jsonModal.classList.remove("open");
+        // 1. Write flattened record directly under `transfer_receive/<postingId>`
+        await transferReceiveRef.child(postingId).set(flattenedPayload);
+
+        // 2. Increment stock in `stock_summary` for each received item
+        for (const item of stockUpdateQueue) {
+          await updateStockSummaryForItem(item.itemName, item.unit, item.quantity);
+        }
+
+        // 3. Show Success Modal with only TRN_RECE_NO
+        trnReceNoBadge.textContent = "TRN_RECE_NO: " + postingId;
+        successModal.classList.add("open");
+        resetFormAfterSubmit();
+      } catch (error) {
+        console.error("Error saving transfer receive:", error);
+        showToast("Failed to save data: " + error.message, "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Submit";
       }
     });
 
-    document.getElementById("copyJsonBtn").addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(jsonOutput.textContent);
-        showToast("JSON copied to clipboard", "success");
-      } catch {
-        showToast("Could not copy automatically", "error");
+    closeSuccessModalBtn.addEventListener("click", () => {
+      successModal.classList.remove("open");
+    });
+
+    successModal.addEventListener("click", (e) => {
+      if (e.target === successModal) {
+        successModal.classList.remove("open");
       }
     });
 
+    // Initialize
+    document.getElementById("receivedDate").value = new Date().toISOString().split("T")[0];
+    initStockSummaryListener();
+    initProjectNamesListener();
     createRow();
   </script>
 </body>
