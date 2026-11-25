@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Transfer Out Entry</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f4f6f9;
+      color: #1e293b;
+    }
+    .container {
+      max-width: 1180px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 12px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      color: #0f172a;
+    }
+    /* Centered Header Table */
+    .header-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .header-grid {
+      width: 100%;
+      max-width: 960px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      padding: 16px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+    }
+    @media (max-width: 768px) {
+      .header-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      position: relative;
+    }
+    label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #334155;
+    }
+    input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      font-size: 0.88rem;
+      color: #0f172a;
+      background: #ffffff;
+      transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
+    }
+    input:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
+      background: #eff6ff;
+    }
+    /* Invalid / Outside List Item Red Styling */
+    input.invalid-item {
+      border-color: #dc2626 !important;
+      background: #fee2e2 !important;
+      color: #b91c1c !important;
+      font-weight: 600;
+      box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2) !important;
+    }
+    /* Custom Dropdown List */
+    .custom-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      max-height: 220px;
+      overflow-y: auto;
+      background: #ffffff;
+      border: 1px solid #94a3b8;
+      border-radius: 6px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
+      z-index: 1000;
+      display: none;
+      margin-top: 2px;
+      text-align: left;
+    }
+    .custom-dropdown.open {
+      display: block;
+    }
+    .dropdown-item {
+      padding: 8px 10px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .dropdown-item:last-child {
+      border-bottom: none;
+    }
+    .dropdown-item:hover,
+    .dropdown-item.active {
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-weight: 600;
+    }
+    .stock-tag {
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: #dcfce7;
+      color: #15803d;
+      white-space: nowrap;
+    }
+    /* Item Table */
+    .table-wrap {
+      width: 100%;
+      overflow: visible;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      margin-bottom: 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #e2e8f0;
+      padding: 8px;
+      text-align: center;
+      font-size: 0.86rem;
+      position: relative;
+    }
+    thead th {
+      background: #f8fafc;
+      font-weight: 700;
+      color: #0f172a;
+      white-space: nowrap;
+    }
+    td input {
+      padding: 6px 8px;
+      font-size: 0.86rem;
+      text-align: center;
+    }
+    td input.item-input {
+      text-align: left;
+    }
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .btn {
+      padding: 9px 16px;
+      border-radius: 6px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #0f172a;
+    }
+    .btn:hover:not(:disabled) {
+      background: #f1f5f9;
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-primary {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: #ffffff;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: #1d4ed8;
+    }
+    .btn-danger {
+      background: #fee2e2;
+      border-color: #fca5a5;
+      color: #dc2626;
+      padding: 5px 10px;
+      font-size: 0.8rem;
+    }
+    .btn-danger:hover {
+      background: #fecaca;
+    }
+    .status-msg {
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: #15803d;
+    }
+
+    /* Confirmation Modal Styles */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 2000;
+    }
+    .modal-backdrop.open {
+      display: flex;
+    }
+    .modal-box {
+      width: 100%;
+      max-width: 680px;
+      background: #ffffff;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 20px 35px rgba(15, 23, 42, 0.25);
+      overflow: hidden;
+      animation: popIn 0.15s ease-out;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.96); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-header {
+      padding: 14px 18px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      color: #0f172a;
+    }
+    .modal-body {
+      padding: 16px 18px;
+      max-height: 70vh;
+      overflow-y: auto;
+      font-size: 0.88rem;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px 14px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+    .summary-grid div strong {
+      color: #334155;
+    }
+    .modal-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .modal-table th, .modal-table td {
+      border: 1px solid #e2e8f0;
+      padding: 6px 8px;
+      font-size: 0.84rem;
+      text-align: center;
+    }
+    .modal-table thead th {
+      background: #f1f5f9;
+    }
+    .modal-footer {
+      padding: 12px 18px;
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="top-bar">
+      <h1>Transfer Out Module</h1>
+    </div>
+
+    <form id="transfer-out-form" autocomplete="off">
+      <!-- Centered Header Table (All Required) -->
+      <div class="header-wrapper">
+        <div class="header-grid">
+          <div class="field">
+            <label for="trn-date">Date</label>
+            <input type="date" id="trn-date" name="date" class="nav-input" required />
+          </div>
+
+          <div class="field">
+            <label for="gate-pass-no">Gate Pass No</label>
+            <input type="text" id="gate-pass-no" name="gate_pass_no" class="nav-input" required />
+          </div>
+
+          <div class="field" id="project-field-wrap">
+            <label for="to-project">To Project</label>
+            <input type="text" id="to-project" name="to_project" class="nav-input" required />
+            <div class="custom-dropdown" id="project-dropdown"></div>
+          </div>
+
+          <div class="field">
+            <label for="indent-no">Indent No</label>
+            <input type="text" id="indent-no" name="indent_no" class="nav-input" required />
+          </div>
+
+          <div class="field">
+            <label for="receiver-name">Receiver Name</label>
+            <input type="text" id="receiver-name" name="receiver_name" class="nav-input" required />
+          </div>
+
+          <div class="field">
+            <label for="vehicle-no">Vehicle No</label>
+            <input type="text" id="vehicle-no" name="vehicle_no" class="nav-input" required />
+          </div>
+        </div>
+      </div>
+
+      <!-- Item Table (All Required except ERP Num) -->
+      <div class="table-wrap">
+        <table id="item-table">
+          <thead>
+            <tr>
+              <th style="width: 60px;">SL</th>
+              <th style="min-width: 280px;">Item</th>
+              <th style="width: 115px;">Unit</th>
+              <th style="width: 135px;">Quantity</th>
+              <th style="width: 165px;">ERP Num</th>
+              <th style="width: 90px;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="item-tbody">
+            <tr>
+              <td class="sl-cell">1</td>
+              <td class="item-td">
+                <input type="text" name="item_1" class="nav-input table-cell item-input" data-col="0" required />
+                <div class="custom-dropdown item-dropdown"></div>
+              </td>
+              <td><input type="text" name="unit_1" class="nav-input table-cell unit-input" data-col="1" required /></td>
+              <td><input type="number" step="any" min="0.0001" name="quantity_1" class="nav-input table-cell qty-input" data-col="2" required /></td>
+              <td><input type="text" name="erp_num_1" class="nav-input table-cell erp-input last-col" data-col="3" /></td>
+              <td><button type="button" class="btn btn-danger" tabindex="-1" onclick="removeRow(this)">Delete</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn" id="add-row-btn">+ Add Row</button>
+        <span class="status-msg" id="save-status"></span>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn" id="reset-btn">Clear</button>
+          <button type="submit" class="btn btn-primary" id="submit-btn">Submit Transfer Out</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div class="modal-backdrop" id="confirm-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>Confirm Transfer Out</h2>
+        <button type="button" class="btn" id="modal-close-x" style="padding: 4px 10px;">X</button>
+      </div>
+      <div class="modal-body" id="modal-summary-body"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn" id="modal-cancel-btn">Cancel</button>
+        <button type="button" class="btn btn-primary" id="modal-confirm-btn">Confirm &amp; Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import {
+      getDatabase,
+      ref,
+      set,
+      update,
+      onValue
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+    const defaultFirebaseConfig = {
+      apiKey: "AIzaSyCQV_4nv_ohzevtZRxLj3Aq4kVafVEiLKw",
+      authDomain: "tazul503.firebaseapp.com",
+      databaseURL: "https://tazul503-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "tazul503",
+      storageBucket: "tazul503.firebasestorage.app",
+      messagingSenderId: "190926921011",
+      appId: "1:190926921011:web:77822854066e6a840f3246"
+    };
+
+    const app = initializeApp(defaultFirebaseConfig);
+    const db = getDatabase(app);
+
+    const TRANSFER_OUT_NODE = "transfer_out";
+    const TRANSFER_RECEIVE_NODE = "transfer_receive";
+    const STOCK_SUMMARY_NODE = "stock_summary";
+
+    const form = document.getElementById("transfer-out-form");
+    const tbody = document.getElementById("item-tbody");
+    const dateInput = document.getElementById("trn-date");
+    const toProjectInput = document.getElementById("to-project");
+    const projectDropdown = document.getElementById("project-dropdown");
+    const saveStatus = document.getElementById("save-status");
+
+    const confirmModal = document.getElementById("confirm-modal");
+    const modalSummaryBody = document.getElementById("modal-summary-body");
+    const modalConfirmBtn = document.getElementById("modal-confirm-btn");
+    const modalCancelBtn = document.getElementById("modal-cancel-btn");
+    const modalCloseX = document.getElementById("modal-close-x");
+
+    let nextTrnOutId = "2600001";
+    let pendingPayload = null;
+    const projectSet = new Set();
+    const stockItemMap = new Map(); // normalizedName -> { key, name, unit, stock, stockField }
+
+    const STOCK_QTY_KEYS = [
+      "stock_quantity",
+      "stockQuantity",
+      "stockQty",
+      "stock_qty",
+      "quantity",
+      "qty",
+      "totalStockQuantity",
+      "total_stock_quantity",
+      "totalStock",
+      "total_stock",
+      "balance",
+      "stock"
+    ];
+
+    function toNum(v) {
+      if (v === null || v === undefined || v === "") return 0;
+      const cleaned = typeof v === "string" ? v.replace(/,/g, "").trim() : v;
+      const n = Number(cleaned);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function normalizeKey(str) {
+      return String(str || "").trim().toLowerCase().replace(/\s+/g, " ");
+    }
+
+    function pickField(obj, keys, fallback = "") {
+      for (const k of keys) {
+        if (obj && obj[k] !== undefined && obj[k] !== null && obj[k] !== "") {
+          return obj[k];
+        }
+      }
+      return fallback;
+    }
+
+    function detectStockField(itemObj) {
+      for (const k of STOCK_QTY_KEYS) {
+        if (itemObj && itemObj[k] !== undefined) {
+          return k;
+        }
+      }
+      return "stock_quantity";
+    }
+
+    function setTodayDate() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const dd = String(now.getDate()).padStart(2, "0");
+      dateInput.value = `${yyyy}-${mm}-${dd}`;
+    }
+    setTodayDate();
+
+    function computeNextId(existingData) {
+      const yearPrefix = String(new Date().getFullYear()).slice(-2);
+      let maxSeq = 0;
+
+      if (existingData && typeof existingData === "object") {
+        for (const key of Object.keys(existingData)) {
+          const cleanKey = String(key).trim();
+          if (cleanKey.startsWith(yearPrefix) && cleanKey.length === 7) {
+            const seqPart = Number(cleanKey.slice(2));
+            if (Number.isFinite(seqPart) && seqPart > maxSeq) {
+              maxSeq = seqPart;
+            }
+          }
+        }
+      }
+
+      const nextSeq = String(maxSeq + 1).padStart(5, "0");
+      return `${yearPrefix}${nextSeq}`;
+    }
+
+    onValue(ref(db, TRANSFER_OUT_NODE), (snapshot) => {
+      const val = snapshot.exists() ? snapshot.val() : null;
+      nextTrnOutId = computeNextId(val);
+
+      if (val && typeof val === "object") {
+        Object.values(val).forEach((rec) => {
+          if (rec && typeof rec === "object") {
+            const p = pickField(rec, ["to_project", "toProject", "project_name", "projectName"], "");
+            if (p) projectSet.add(String(p).trim());
+          }
+        });
+      }
+    });
+
+    onValue(ref(db, TRANSFER_RECEIVE_NODE), (snapshot) => {
+      const val = snapshot.exists() ? snapshot.val() : null;
+      if (val && typeof val === "object") {
+        Object.values(val).forEach((rec) => {
+          if (rec && typeof rec === "object") {
+            const p = pickField(rec, ["project_name", "projectName", "to_project"], "");
+            if (p) projectSet.add(String(p).trim());
+          }
+        });
+      }
+    });
+
+    onValue(ref(db, "projects"), (snapshot) => {
+      const val = snapshot.exists() ? snapshot.val() : null;
+      if (val && typeof val === "object") {
+        Object.values(val).forEach((rec) => {
+          if (typeof rec === "string" && rec.trim()) {
+            projectSet.add(rec.trim());
+          } else if (rec && typeof rec === "object") {
+            const p = pickField(rec, ["project_name", "projectName", "name", "title"], "");
+            if (p) projectSet.add(String(p).trim());
+          }
+        });
+      }
+    });
+
+    // Listen to /stock_summary and build valid in-stock map
+    onValue(ref(db, STOCK_SUMMARY_NODE), (snapshot) => {
+      stockItemMap.clear();
+      const rawVal = snapshot.exists() ? snapshot.val() : null;
+      if (!rawVal || typeof rawVal !== "object") {
+        tbody.querySelectorAll("tr").forEach((tr) => validateItemInput(tr));
+        return;
+      }
+
+      const entries = Array.isArray(rawVal)
+        ? rawVal.map((v, i) => [String(i + 1), v])
+        : Object.entries(rawVal);
+
+      for (const [key, item] of entries) {
+        if (!item || typeof item !== "object") continue;
+        const itemName = String(
+          pickField(item, ["itemName", "item_name", "name", "item", "title", "description"], key)
+        ).trim();
+        if (!itemName) continue;
+
+        const stock = toNum(pickField(item, STOCK_QTY_KEYS, 0));
+        if (!Number.isFinite(stock) || stock <= 0) continue;
+
+        const unit = String(pickField(item, ["unit", "uom", "Unit"], "")).trim();
+        const stockField = detectStockField(item);
+
+        stockItemMap.set(normalizeKey(itemName), {
+          key,
+          name: itemName,
+          unit,
+          stock,
+          stockField
+        });
+      }
+
+      tbody.querySelectorAll("tr").forEach((tr) => validateItemInput(tr));
+    });
+
+    function renderProjectDropdown(filterText = "") {
+      const queryStr = filterText.trim().toLowerCase();
+      const projects = Array.from(projectSet)
+        .filter((p) => !queryStr || p.toLowerCase().includes(queryStr))
+        .sort((a, b) => a.localeCompare(b));
+
+      if (!projects.length) {
+        projectDropdown.classList.remove("open");
+        projectDropdown.innerHTML = "";
+        return;
+      }
+
+      projectDropdown.innerHTML = projects
+        .map(
+          (p, i) => `<div class="dropdown-item" data-idx="${i}" data-val="${p.replace(/"/g, "&quot;")}">${p}</div>`
+        )
+        .join("");
+      projectDropdown.classList.add("open");
+    }
+
+    toProjectInput.addEventListener("focus", () => renderProjectDropdown(toProjectInput.value));
+    toProjectInput.addEventListener("input", () => renderProjectDropdown(toProjectInput.value));
+
+    projectDropdown.addEventListener("mousedown", (e) => {
+      const itemEl = e.target.closest(".dropdown-item");
+      if (!itemEl) return;
+      e.preventDefault();
+      toProjectInput.value = itemEl.dataset.val;
+      projectDropdown.classList.remove("open");
+      document.getElementById("indent-no").focus();
+    });
+
+    function validateItemInput(tr) {
+      const itemInp = tr.querySelector(".item-input");
+      const unitInp = tr.querySelector(".unit-input");
+      const rawVal = itemInp.value;
+
+      if (!rawVal.trim()) {
+        itemInp.classList.remove("invalid-item");
+        return false;
+      }
+
+      const exactEntry = Array.from(stockItemMap.values()).find(
+        (it) => it.name.toLowerCase() === rawVal.trim().toLowerCase()
+      );
+
+      if (exactEntry && exactEntry.stock > 0) {
+        itemInp.classList.remove("invalid-item");
+        if (exactEntry.unit && !unitInp.value.trim()) {
+          unitInp.value = exactEntry.unit;
+        }
+        return true;
+      } else {
+        itemInp.classList.add("invalid-item");
+        return false;
+      }
+    }
+
+    function applyItemSelection(tr, itemObj) {
+      const itemInp = tr.querySelector(".item-input");
+      const unitInp = tr.querySelector(".unit-input");
+      const qtyInp = tr.querySelector(".qty-input");
+      const dropdown = tr.querySelector(".item-dropdown");
+
+      itemInp.value = itemObj.name;
+      itemInp.classList.remove("invalid-item");
+      if (itemObj.unit) {
+        unitInp.value = itemObj.unit;
+      }
+
+      dropdown.classList.remove("open");
+      qtyInp.focus();
+      qtyInp.select();
+    }
+
+    function renderItemDropdown(tr, filterText = "") {
+      const dropdown = tr.querySelector(".item-dropdown");
+      const queryStr = filterText.trim().toLowerCase();
+
+      const matches = Array.from(stockItemMap.values())
+        .filter((it) => it.stock > 0 && (!queryStr || it.name.toLowerCase().includes(queryStr)))
+        .slice(0, 35);
+
+      if (!matches.length) {
+        dropdown.classList.remove("open");
+        dropdown.innerHTML = "";
+        return;
+      }
+
+      dropdown.innerHTML = matches
+        .map(
+          (it, i) => `
+          <div class="dropdown-item ${i === 0 ? "active" : ""}" data-idx="${i}" data-key="${normalizeKey(it.name)}">
+            <span>${it.name}</span>
+            <span class="stock-tag">Stock: ${it.stock} ${it.unit}</span>
+          </div>
+        `
+        )
+        .join("");
+      dropdown.classList.add("open");
+    }
+
+    function autoCopyErpDownwards(sourceTr, erpValue) {
+      if (!erpValue || erpValue.trim() === "") return;
+
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+      const startIndex = rows.indexOf(sourceTr);
+      if (startIndex === -1) return;
+
+      for (let i = startIndex + 1; i < rows.length; i += 1) {
+        const erpInp = rows[i].querySelector(".erp-input");
+        if (erpInp) {
+          erpInp.value = erpValue;
+        }
+      }
+    }
+
+    tbody.addEventListener("input", (e) => {
+      const target = e.target;
+      const tr = target.closest("tr");
+      if (!tr) return;
+
+      if (target.classList.contains("item-input")) {
+        validateItemInput(tr);
+        renderItemDropdown(tr, target.value);
+      } else if (target.classList.contains("erp-input")) {
+        autoCopyErpDownwards(tr, target.value);
+      }
+    });
+
+    tbody.addEventListener("focusin", (e) => {
+      const target = e.target;
+      if (!target.classList.contains("item-input")) return;
+      const tr = target.closest("tr");
+      renderItemDropdown(tr, target.value);
+    });
+
+    tbody.addEventListener("mousedown", (e) => {
+      const itemEl = e.target.closest(".dropdown-item");
+      if (!itemEl) return;
+      e.preventDefault();
+      const tr = itemEl.closest("tr");
+      const found = stockItemMap.get(itemEl.dataset.key);
+      if (found) applyItemSelection(tr, found);
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest("#project-field-wrap")) {
+        projectDropdown.classList.remove("open");
+      }
+      if (!e.target.closest(".item-td")) {
+        tbody.querySelectorAll(".item-dropdown").forEach((d) => d.classList.remove("open"));
+      }
+    });
+
+    function reindexRows() {
+      const rows = tbody.querySelectorAll("tr");
+      rows.forEach((tr, idx) => {
+        const num = idx + 1;
+        tr.querySelector(".sl-cell").textContent = num;
+        tr.querySelectorAll("input").forEach((inp) => {
+          if (inp.name) {
+            inp.name = inp.name.replace(/_\d+$/, `_${num}`);
+          }
+        });
+      });
+    }
+
+    function addRow(shouldFocus = true) {
+      const rows = tbody.querySelectorAll("tr");
+      const num = rows.length + 1;
+      const lastRow = rows[rows.length - 1];
+      const inheritedErp = lastRow ? lastRow.querySelector(".erp-input").value.trim() : "";
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="sl-cell">${num}</td>
+        <td class="item-td">
+          <input type="text" name="item_${num}" class="nav-input table-cell item-input" data-col="0" required />
+          <div class="custom-dropdown item-dropdown"></div>
+        </td>
+        <td><input type="text" name="unit_${num}" class="nav-input table-cell unit-input" data-col="1" required /></td>
+        <td><input type="number" step="any" min="0.0001" name="quantity_${num}" class="nav-input table-cell qty-input" data-col="2" required /></td>
+        <td><input type="text" name="erp_num_${num}" value="${inheritedErp.replace(/"/g, "&quot;")}" class="nav-input table-cell erp-input last-col" data-col="3" /></td>
+        <td><button type="button" class="btn btn-danger" tabindex="-1" onclick="removeRow(this)">Delete</button></td>
+      `;
+      tbody.appendChild(tr);
+      if (shouldFocus) {
+        const firstInput = tr.querySelector(".item-input");
+        if (firstInput) firstInput.focus();
+      }
+    }
+
+    window.removeRow = function (btn) {
+      const rows = tbody.querySelectorAll("tr");
+      if (rows.length <= 1) {
+        rows[0].querySelectorAll("input").forEach((inp) => {
+          inp.value = "";
+          inp.classList.remove("invalid-item");
+        });
+        rows[0].querySelector(".item-input").focus();
+        return;
+      }
+      btn.closest("tr").remove();
+      reindexRows();
+    };
+
+    document.getElementById("add-row-btn").addEventListener("click", () => addRow(true));
+
+    function resetFormState() {
+      form.reset();
+      setTodayDate();
+      while (tbody.querySelectorAll("tr").length > 1) {
+        tbody.lastElementChild.remove();
+      }
+      const firstItem = tbody.querySelector(".item-input");
+      if (firstItem) firstItem.classList.remove("invalid-item");
+      reindexRows();
+      document.getElementById("gate-pass-no").focus();
+    }
+
+    document.getElementById("reset-btn").addEventListener("click", () => {
+      saveStatus.textContent = "";
+      resetFormState();
+    });
+
+    form.addEventListener("keydown", (e) => {
+      const target = e.target;
+      if (!target.classList.contains("nav-input")) return;
+
+      const openDropdown =
+        target === toProjectInput && projectDropdown.classList.contains("open")
+          ? projectDropdown
+          : target.classList.contains("item-input") &&
+            target.closest(".item-td").querySelector(".item-dropdown.open")
+          ? target.closest(".item-td").querySelector(".item-dropdown.open")
+          : null;
+
+      if (openDropdown) {
+        const items = Array.from(openDropdown.querySelectorAll(".dropdown-item"));
+        let currentIdx = items.findIndex((el) => el.classList.contains("active"));
+
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          if (currentIdx >= 0) items[currentIdx].classList.remove("active");
+          currentIdx = (currentIdx + 1) % items.length;
+          items[currentIdx].classList.add("active");
+          items[currentIdx].scrollIntoView({ block: "nearest" });
+          return;
+        }
+        if (e.key === "ArrowUp") {
+          e.preventDefault();
+          if (currentIdx >= 0) items[currentIdx].classList.remove("active");
+          currentIdx = currentIdx <= 0 ? items.length - 1 : currentIdx - 1;
+          items[currentIdx].classList.add("active");
+          items[currentIdx].scrollIntoView({ block: "nearest" });
+          return;
+        }
+        if (e.key === "Enter" && items.length > 0) {
+          e.preventDefault();
+          const chosenIdx = currentIdx >= 0 ? currentIdx : 0;
+          if (openDropdown === projectDropdown) {
+            toProjectInput.value = items[chosenIdx].dataset.val;
+            projectDropdown.classList.remove("open");
+            document.getElementById("indent-no").focus();
+          } else {
+            const tr = target.closest("tr");
+            const found = stockItemMap.get(items[chosenIdx].dataset.key);
+            if (found) applyItemSelection(tr, found);
+          }
+          return;
+        }
+        if (e.key === "Escape") {
+          openDropdown.classList.remove("open");
+          return;
+        }
+      }
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        projectDropdown.classList.remove("open");
+        tbody.querySelectorAll(".item-dropdown").forEach((d) => d.classList.remove("open"));
+
+        if (target.classList.contains("qty-input")) {
+          const currentTr = target.closest("tr");
+          const erpInp = currentTr.querySelector(".erp-input");
+          if (erpInp && erpInp.value.trim() !== "") {
+            if (currentTr === tbody.lastElementChild) {
+              addRow(true);
+            } else {
+              const nextTr = currentTr.nextElementSibling;
+              const nextItem = nextTr ? nextTr.querySelector(".item-input") : null;
+              if (nextItem) nextItem.focus();
+            }
+            return;
+          }
+        }
+
+        if (target.classList.contains("last-col")) {
+          const currentTr = target.closest("tr");
+          if (currentTr === tbody.lastElementChild) {
+            addRow(true);
+            return;
+          }
+        }
+
+        const allInputs = Array.from(form.querySelectorAll(".nav-input:not(:disabled):not([readonly])"));
+        const currentIndex = allInputs.indexOf(target);
+        if (currentIndex > -1 && currentIndex < allInputs.length - 1) {
+          const nextInput = allInputs[currentIndex + 1];
+          nextInput.focus();
+          if (nextInput.select && nextInput.type !== "date") nextInput.select();
+        }
+        return;
+      }
+
+      if (target.classList.contains("table-cell")) {
+        const currentTr = target.closest("tr");
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+        const rowIndex = rows.indexOf(currentTr);
+        const colIndex = Number(target.dataset.col);
+
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          if (rowIndex < rows.length - 1) {
+            const nextCell = rows[rowIndex + 1].querySelector(`input[data-col="${colIndex}"]`);
+            if (nextCell) nextCell.focus();
+          }
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          if (rowIndex > 0) {
+            const prevCell = rows[rowIndex - 1].querySelector(`input[data-col="${colIndex}"]`);
+            if (prevCell) prevCell.focus();
+          } else {
+            document.getElementById("vehicle-no").focus();
+          }
+        } else if (e.key === "ArrowRight") {
+          const atEnd =
+            target.type === "number" ||
+            target.selectionStart === target.value.length;
+          if (atEnd && colIndex < 3) {
+            e.preventDefault();
+            const rightCell = currentTr.querySelector(`input[data-col="${colIndex + 1}"]`);
+            if (rightCell) rightCell.focus();
+          }
+        } else if (e.key === "ArrowLeft") {
+          const atStart =
+            target.type === "number" ||
+            target.selectionStart === 0;
+          if (atStart && colIndex > 0) {
+            e.preventDefault();
+            const leftCell = currentTr.querySelector(`input[data-col="${colIndex - 1}"]`);
+            if (leftCell) leftCell.focus();
+          }
+        }
+      } else {
+        const headerInputs = Array.from(
+          form.querySelectorAll(".header-grid .nav-input:not([readonly])")
+        );
+        const hIdx = headerInputs.indexOf(target);
+        if (e.key === "ArrowDown" && hIdx === headerInputs.length - 1) {
+          e.preventDefault();
+          const firstCell = tbody.querySelector('input[data-col="0"]');
+          if (firstCell) firstCell.focus();
+        }
+      }
+    });
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      saveStatus.textContent = "";
+
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+      let hasInvalidItem = false;
+
+      for (const tr of rows) {
+        const valid = validateItemInput(tr);
+        if (!valid) {
+          hasInvalidItem = true;
+        }
+      }
+
+      if (hasInvalidItem) {
+        saveStatus.style.color = "#dc2626";
+        saveStatus.textContent = "Please select valid in-stock items from the list (red highlighted items are invalid).";
+        const firstInvalid = tbody.querySelector(".invalid-item");
+        if (firstInvalid) firstInvalid.focus();
+        return;
+      }
+
+      const nodeId = nextTrnOutId;
+      const recordPayload = {
+        firebase_id: nodeId,
+        trn_out_no: nodeId,
+        date: dateInput.value.trim(),
+        gate_pass_no: document.getElementById("gate-pass-no").value.trim(),
+        to_project: toProjectInput.value.trim(),
+        indent_no: document.getElementById("indent-no").value.trim(),
+        receiver_name: document.getElementById("receiver-name").value.trim(),
+        vehicle_no: document.getElementById("vehicle-no").value.trim(),
+        total_rows: rows.length,
+        created_at: Date.now()
+      };
+
+      const previewItems = [];
+      const deductedByItemKey = new Map();
+
+      rows.forEach((tr, idx) => {
+        const lineNum = idx + 1;
+        const itemVal = tr.querySelector(".item-input").value.trim();
+        const unitVal = tr.querySelector(".unit-input").value.trim();
+        const qtyVal = toNum(tr.querySelector(".qty-input").value);
+        const erpVal = tr.querySelector(".erp-input").value.trim();
+
+        recordPayload[`item_name_${lineNum}`] = itemVal;
+        recordPayload[`unit_${lineNum}`] = unitVal;
+        recordPayload[`quantity_${lineNum}`] = qtyVal;
+        recordPayload[`erp_num_${lineNum}`] = erpVal;
+
+        const norm = normalizeKey(itemVal);
+        deductedByItemKey.set(norm, (deductedByItemKey.get(norm) || 0) + qtyVal);
+
+        previewItems.push({ sl: lineNum, itemVal, unitVal, qtyVal, erpVal });
+      });
+
+      // Prepare multi-path stock_summary updates
+      const stockUpdates = {};
+      for (const [norm, outQty] of deductedByItemKey.entries()) {
+        const stockEntry = stockItemMap.get(norm);
+        if (stockEntry) {
+          const updatedQty = Math.max(0, stockEntry.stock - outQty);
+          stockUpdates[`${stockEntry.key}/${stockEntry.stockField}`] = updatedQty;
+          stockUpdates[`${stockEntry.key}/updatedAt`] = Date.now();
+        }
+      }
+
+      pendingPayload = { nodeId, recordPayload, stockUpdates };
+
+      modalSummaryBody.innerHTML = `
+        <div class="summary-grid">
+          <div><strong>TRN Out No:</strong> ${recordPayload.trn_out_no}</div>
+          <div><strong>Date:</strong> ${recordPayload.date}</div>
+          <div><strong>Gate Pass No:</strong> ${recordPayload.gate_pass_no}</div>
+          <div><strong>To Project:</strong> ${recordPayload.to_project}</div>
+          <div><strong>Indent No:</strong> ${recordPayload.indent_no}</div>
+          <div><strong>Receiver:</strong> ${recordPayload.receiver_name}</div>
+          <div style="grid-column: span 2;"><strong>Vehicle No:</strong> ${recordPayload.vehicle_no}</div>
+        </div>
+        <table class="modal-table">
+          <thead>
+            <tr>
+              <th>SL</th>
+              <th>Item</th>
+              <th>Unit</th>
+              <th>Quantity</th>
+              <th>ERP Num</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${previewItems
+              .map(
+                (it) => `
+                <tr>
+                  <td>${it.sl}</td>
+                  <td style="text-align:left;"><strong>${it.itemVal}</strong></td>
+                  <td>${it.unitVal}</td>
+                  <td>${it.qtyVal}</td>
+                  <td>${it.erpVal || "-"}</td>
+                </tr>
+              `
+              )
+              .join("")}
+          </tbody>
+        </table>
+      `;
+
+      confirmModal.classList.add("open");
+      modalConfirmBtn.focus();
+    });
+
+    function closeConfirmModal() {
+      confirmModal.classList.remove("open");
+      pendingPayload = null;
+    }
+
+    modalCancelBtn.addEventListener("click", closeConfirmModal);
+    modalCloseX.addEventListener("click", closeConfirmModal);
+
+    modalConfirmBtn.addEventListener("click", async () => {
+      if (!pendingPayload) return;
+      modalConfirmBtn.disabled = true;
+      modalConfirmBtn.textContent = "Saving...";
+
+      try {
+        const { nodeId, recordPayload, stockUpdates } = pendingPayload;
+        await set(ref(db, `${TRANSFER_OUT_NODE}/${nodeId}`), recordPayload);
+
+        if (stockUpdates && Object.keys(stockUpdates).length > 0) {
+          await update(ref(db, STOCK_SUMMARY_NODE), stockUpdates);
+        }
+
+        closeConfirmModal();
+        saveStatus.style.color = "#15803d";
+        saveStatus.textContent = `Saved & Stock Updated! (TRN Out No: ${nodeId})`;
+        resetFormState();
+      } catch (err) {
+        closeConfirmModal();
+        saveStatus.style.color = "#dc2626";
+        saveStatus.textContent = `Error: ${err.message}`;
+      } finally {
+        modalConfirmBtn.disabled = false;
+        modalConfirmBtn.textContent = "Confirm & Submit";
+      }
+    });
+
+    window.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("gate-pass-no").focus();
+    });
+  </script>
+</body>
+</html>
