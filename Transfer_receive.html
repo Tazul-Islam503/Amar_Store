@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Transfer Receive Records</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f4f6f9;
+      color: #1e293b;
+    }
+    .container {
+      max-width: 1550px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      color: #0f172a;
+    }
+    button, .page-size-select {
+      padding: 7px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #0f172a;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover:not(:disabled) {
+      background: #f1f5f9;
+    }
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1650px;
+    }
+    th, td {
+      border: 1px solid #e2e8f0;
+      padding: 8px 8px;
+      font-size: 0.85rem;
+      text-align: center;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    thead th {
+      background: #f8fafc;
+      font-weight: 700;
+      color: #0f172a;
+      vertical-align: top;
+    }
+    .col-title {
+      margin-bottom: 6px;
+    }
+    .filter-box {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 90px;
+    }
+    .filter-box input,
+    .filter-box select {
+      width: 100%;
+      padding: 5px 6px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      background: #ffffff;
+      color: #0f172a;
+      text-align: center;
+    }
+    .filter-box input:focus,
+    .filter-box select:focus {
+      outline: none;
+      border-color: #2563eb;
+    }
+    tbody tr:hover {
+      background: #f8fafc;
+    }
+    .empty-row {
+      padding: 20px;
+      color: #64748b;
+    }
+    .status-pending {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      background: #fef3c7;
+      color: #b45309;
+    }
+    .status-posted {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      background: #dcfce7;
+      color: #15803d;
+    }
+    .pagination-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+      padding: 10px 14px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.86rem;
+    }
+    .page-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .page-info {
+      font-weight: 600;
+      color: #334155;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>Transfer Receive Records</h1>
+      <button type="button" id="clear-filters-btn">Clear Filters</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>
+              <div class="col-title">Sl</div>
+              <div class="filter-box"><input type="text" id="f-sl" placeholder="SL..." /></div>
+            </th>
+            <th>
+              <div class="col-title">Trn Rec No</div>
+              <div class="filter-box"><input type="text" id="f-trn-rec" placeholder="Rec No..." /></div>
+            </th>
+            <th>
+              <div class="col-title">Received Date</div>
+              <div class="filter-box"><input type="text" id="f-rec-date" placeholder="YYYY-MM-DD..." /></div>
+            </th>
+            <th>
+              <div class="col-title">Project / Warehouse</div>
+              <div class="filter-box"><input type="text" id="f-project" placeholder="Project..." /></div>
+            </th>
+            <th>
+              <div class="col-title">Gate Pass No</div>
+              <div class="filter-box"><input type="text" id="f-gp-no" placeholder="Gate Pass..." /></div>
+            </th>
+            <th>
+              <div class="col-title">Gate Pass Date</div>
+              <div class="filter-box"><input type="text" id="f-gp-date" placeholder="YYYY-MM-DD..." /></div>
+            </th>
+            <th>
+              <div class="col-title">Ref. Indent</div>
+              <div class="filter-box"><input type="text" id="f-indent" placeholder="Indent..." /></div>
+            </th>
+            <th>
+              <div class="col-title">Item Name</div>
+              <div class="filter-box"><input type="text" id="f-item" placeholder="Item name..." /></div>
+            </th>
+            <th>
+              <div class="col-title">Unit</div>
+              <div class="filter-box"><input type="text" id="f-unit" placeholder="Unit..." /></div>
+            </th>
+            <th>
+              <div class="col-title">Quantity</div>
+              <div class="filter-box"><input type="text" id="f-qty" placeholder="Qty..." /></div>
+            </th>
+            <th>
+              <div class="col-title">For User</div>
+              <div class="filter-box"><input type="text" id="f-user" placeholder="User..." /></div>
+            </th>
+            <th>
+              <div class="col-title">Physical Status</div>
+              <div class="filter-box"><input type="text" id="f-phys" placeholder="Status..." /></div>
+            </th>
+            <th>
+              <div class="col-title">ERP Trn No</div>
+              <div class="filter-box">
+                <select id="f-erp-cond">
+                  <option value="all">All</option>
+                  <option value="blank">Blank</option>
+                  <option value="not_blank">Not Blank</option>
+                </select>
+                <input type="text" id="f-erp-text" placeholder="Search ERP..." />
+              </div>
+            </th>
+            <th>
+              <div class="col-title">Remarks</div>
+              <div class="filter-box"><input type="text" id="f-remarks" placeholder="Remarks..." /></div>
+            </th>
+          </tr>
+        </thead>
+        <tbody id="transfer-receive-tbody">
+          <tr>
+            <td colspan="14" class="empty-row">Loading transfer receive records...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls (Default 100 rows per page) -->
+    <div class="pagination-bar">
+      <div class="page-controls">
+        <span>Rows per page:</span>
+        <select id="page-size" class="page-size-select">
+          <option value="50">50</option>
+          <option value="100" selected>100</option>
+          <option value="200">200</option>
+        </select>
+        <span class="page-info" id="record-range">Showing 0 of 0</span>
+      </div>
+      <div class="page-controls">
+        <button type="button" id="prev-page-btn">Previous</button>
+        <span class="page-info" id="page-indicator">Page 1 of 1</span>
+        <button type="button" id="next-page-btn">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import {
+      getDatabase,
+      ref,
+      query,
+      limitToLast,
+      onValue
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+    const defaultFirebaseConfig = {
+      apiKey: "AIzaSyCQV_4nv_ohzevtZRxLj3Aq4kVafVEiLKw",
+      authDomain: "tazul503.firebaseapp.com",
+      databaseURL: "https://tazul503-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "tazul503",
+      storageBucket: "tazul503.firebasestorage.app",
+      messagingSenderId: "190926921011",
+      appId: "1:190926921011:web:77822854066e6a840f3246"
+    };
+
+    const app = initializeApp(defaultFirebaseConfig);
+    const db = getDatabase(app);
+
+    const TRANSFER_RECEIVE_NODE = "transfer_receive";
+    const FIREBASE_READ_LIMIT = 1000;
+
+    const tbody = document.getElementById("transfer-receive-tbody");
+    const clearBtn = document.getElementById("clear-filters-btn");
+
+    const pageSizeSelect = document.getElementById("page-size");
+    const prevPageBtn = document.getElementById("prev-page-btn");
+    const nextPageBtn = document.getElementById("next-page-btn");
+    const pageIndicator = document.getElementById("page-indicator");
+    const recordRange = document.getElementById("record-range");
+
+    const filterInputs = {
+      sl: document.getElementById("f-sl"),
+      trnRecNo: document.getElementById("f-trn-rec"),
+      receivedDate: document.getElementById("f-rec-date"),
+      projectName: document.getElementById("f-project"),
+      gatePassNo: document.getElementById("f-gp-no"),
+      gatePassDate: document.getElementById("f-gp-date"),
+      refIndent: document.getElementById("f-indent"),
+      itemName: document.getElementById("f-item"),
+      unit: document.getElementById("f-unit"),
+      quantity: document.getElementById("f-qty"),
+      forUser: document.getElementById("f-user"),
+      physicalStatus: document.getElementById("f-phys"),
+      erpCond: document.getElementById("f-erp-cond"),
+      erpText: document.getElementById("f-erp-text"),
+      remarks: document.getElementById("f-remarks")
+    };
+
+    let masterLineRows = [];
+    let currentPage = 1;
+
+    function isBlankOrNa(val) {
+      if (val === undefined || val === null) return true;
+      const s = String(val).trim().toLowerCase();
+      return s === "" || s === "n/a" || s === "na" || s === "none" || s === "null";
+    }
+
+    function pickValue(obj, keys, fallback = "-") {
+      for (const k of keys) {
+        if (obj && obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim() !== "") {
+          return obj[k];
+        }
+      }
+      return fallback;
+    }
+
+    function parseDateTimestamp(dateStr) {
+      if (!dateStr || dateStr === "-") return 0;
+      const ts = Date.parse(String(dateStr).trim());
+      return Number.isFinite(ts) ? ts : 0;
+    }
+
+    function formatErpBadge(erpVal) {
+      const blank = isBlankOrNa(erpVal);
+      const display = blank
+        ? (String(erpVal ?? "").trim() || "Blank")
+        : String(erpVal).trim();
+      const cls = blank ? "status-pending" : "status-posted";
+      return `<span class="${cls}">${display}</span>`;
+    }
+
+    function extractLineRows(recordKey, rec) {
+      if (!rec || typeof rec !== "object") return [];
+
+      const trnRecNo = pickValue(rec, ["trn_rece_no", "trnReceNo", "posting_id", "postingId"], recordKey);
+      const receivedDate = pickValue(rec, ["received_date", "receivedDate"], "-");
+      const projectName = pickValue(rec, ["project_name", "projectName"], "-");
+      const gatePassNo = pickValue(rec, ["gate_pass_no", "gatePassNo"], "-");
+      const gatePassDate = pickValue(rec, ["gate_pass_date", "gatePassDate"], "-");
+      const refIndent = pickValue(rec, ["ref_indent", "refIndent"], "-");
+      const headerRemarks = pickValue(rec, ["remarks", "header_remarks"], "-");
+      const createdAt = Number(rec.created_at ?? rec.createdAt) || 0;
+
+      const indices = new Set();
+      const totalRows = Number(rec.total_rows);
+      if (Number.isFinite(totalRows) && totalRows > 0) {
+        for (let i = 1; i <= totalRows; i += 1) {
+          indices.add(String(i));
+        }
+      }
+
+      for (const key of Object.keys(rec)) {
+        const match = key.match(/^(?:item_name|itemName)_(\d+)$/i);
+        if (match) {
+          indices.add(match[1]);
+        }
+      }
+
+      const sortedIndices = Array.from(indices).sort((a, b) => Number(a) - Number(b));
+      const lineRows = [];
+
+      if (sortedIndices.length > 0) {
+        for (const idx of sortedIndices) {
+          const itemName = pickValue(rec, [`item_name_${idx}`, `itemName_${idx}`], "");
+          if (!itemName || itemName === "-") continue;
+
+          const rawErp = rec[`erp_trn_no_${idx}`] ?? rec.erp_trn_no ?? "";
+          lineRows.push({
+            trnRecNo: String(trnRecNo),
+            receivedDate: String(receivedDate),
+            receivedDateTs: parseDateTimestamp(receivedDate),
+            createdAt,
+            lineIdx: Number(idx) || 0,
+            projectName: String(projectName),
+            gatePassNo: String(gatePassNo),
+            gatePassDate: String(gatePassDate),
+            refIndent: String(refIndent),
+            itemName: String(itemName),
+            unit: String(pickValue(rec, [`unit_${idx}`, `unit`], "-")),
+            quantity: String(pickValue(rec, [`quantity_${idx}`, `qty_${idx}`, `quantity`], "-")),
+            forUser: String(pickValue(rec, [`for_user_${idx}`, `for_user`], "-")),
+            physicalStatus: String(
+              pickValue(rec, [`physical_identification_${idx}`, `physical_identification`], "-")
+            ),
+            rawErp: String(rawErp),
+            isErpBlank: isBlankOrNa(rawErp),
+            remarks: String(pickValue(rec, [`remarks_${idx}`], headerRemarks))
+          });
+        }
+      } else {
+        const itemName = pickValue(rec, ["item_name", "itemName"], "");
+        if (itemName && itemName !== "-") {
+          const rawErp = rec.erp_trn_no ?? "";
+          lineRows.push({
+            trnRecNo: String(trnRecNo),
+            receivedDate: String(receivedDate),
+            receivedDateTs: parseDateTimestamp(receivedDate),
+            createdAt,
+            lineIdx: 1,
+            projectName: String(projectName),
+            gatePassNo: String(gatePassNo),
+            gatePassDate: String(gatePassDate),
+            refIndent: String(refIndent),
+            itemName: String(itemName),
+            unit: String(pickValue(rec, ["unit"], "-")),
+            quantity: String(pickValue(rec, ["quantity", "qty"], "-")),
+            forUser: String(pickValue(rec, ["for_user"], "-")),
+            physicalStatus: String(pickValue(rec, ["physical_identification"], "-")),
+            rawErp: String(rawErp),
+            isErpBlank: isBlankOrNa(rawErp),
+            remarks: String(headerRemarks)
+          });
+        }
+      }
+
+      return lineRows;
+    }
+
+    function sortByReceivedDateDesc(rows) {
+      return [...rows].sort((a, b) => {
+        if (b.receivedDateTs !== a.receivedDateTs) {
+          return b.receivedDateTs - a.receivedDateTs;
+        }
+        const dateCmp = b.receivedDate.localeCompare(a.receivedDate);
+        if (dateCmp !== 0) return dateCmp;
+        if (b.createdAt !== a.createdAt) {
+          return b.createdAt - a.createdAt;
+        }
+        const recCmp = b.trnRecNo.localeCompare(a.trnRecNo, undefined, { numeric: true });
+        if (recCmp !== 0) return recCmp;
+        return a.lineIdx - b.lineIdx;
+      });
+    }
+
+    function applyFiltersAndRender(resetPage = false) {
+      if (resetPage) currentPage = 1;
+
+      const qTrnRec = filterInputs.trnRecNo.value.trim().toLowerCase();
+      const qRecDate = filterInputs.receivedDate.value.trim().toLowerCase();
+      const qProject = filterInputs.projectName.value.trim().toLowerCase();
+      const qGpNo = filterInputs.gatePassNo.value.trim().toLowerCase();
+      const qGpDate = filterInputs.gatePassDate.value.trim().toLowerCase();
+      const qIndent = filterInputs.refIndent.value.trim().toLowerCase();
+      const qItem = filterInputs.itemName.value.trim().toLowerCase();
+      const qUnit = filterInputs.unit.value.trim().toLowerCase();
+      const qQty = filterInputs.quantity.value.trim().toLowerCase();
+      const qUser = filterInputs.forUser.value.trim().toLowerCase();
+      const qPhys = filterInputs.physicalStatus.value.trim().toLowerCase();
+      const erpCond = filterInputs.erpCond.value;
+      const qErpText = filterInputs.erpText.value.trim().toLowerCase();
+      const qRemarks = filterInputs.remarks.value.trim().toLowerCase();
+      const qSl = filterInputs.sl.value.trim().toLowerCase();
+
+      const matched = masterLineRows.filter((r) => {
+        if (qTrnRec && !r.trnRecNo.toLowerCase().includes(qTrnRec)) return false;
+        if (qRecDate && !r.receivedDate.toLowerCase().includes(qRecDate)) return false;
+        if (qProject && !r.projectName.toLowerCase().includes(qProject)) return false;
+        if (qGpNo && !r.gatePassNo.toLowerCase().includes(qGpNo)) return false;
+        if (qGpDate && !r.gatePassDate.toLowerCase().includes(qGpDate)) return false;
+        if (qIndent && !r.refIndent.toLowerCase().includes(qIndent)) return false;
+        if (qItem && !r.itemName.toLowerCase().includes(qItem)) return false;
+        if (qUnit && !r.unit.toLowerCase().includes(qUnit)) return false;
+        if (qQty && !r.quantity.toLowerCase().includes(qQty)) return false;
+        if (qUser && !r.forUser.toLowerCase().includes(qUser)) return false;
+        if (qPhys && !r.physicalStatus.toLowerCase().includes(qPhys)) return false;
+        if (qRemarks && !r.remarks.toLowerCase().includes(qRemarks)) return false;
+
+        if (erpCond === "blank" && !r.isErpBlank) return false;
+        if (erpCond === "not_blank" && r.isErpBlank) return false;
+        if (qErpText && !r.rawErp.toLowerCase().includes(qErpText)) return false;
+
+        return true;
+      });
+
+      const withSl = matched.map((r, idx) => ({ ...r, sl: String(idx + 1) }));
+      const finalRows = !qSl
+        ? withSl
+        : withSl.filter((r) => r.sl.toLowerCase().includes(qSl));
+
+      const pageSize = Number(pageSizeSelect.value) || 100;
+      const totalRecords = finalRows.length;
+      const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
+
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+
+      const startIdx = (currentPage - 1) * pageSize;
+      const endIdx = Math.min(startIdx + pageSize, totalRecords);
+      const pageRows = finalRows.slice(startIdx, endIdx);
+
+      if (!pageRows.length) {
+        tbody.innerHTML = `<tr><td colspan="14" class="empty-row">No matching transfer receive records found.</td></tr>`;
+      } else {
+        tbody.innerHTML = pageRows
+          .map(
+            (r) => `
+          <tr>
+            <td>${r.sl}</td>
+            <td>${r.trnRecNo}</td>
+            <td>${r.receivedDate}</td>
+            <td>${r.projectName}</td>
+            <td>${r.gatePassNo}</td>
+            <td>${r.gatePassDate}</td>
+            <td>${r.refIndent}</td>
+            <td><strong>${r.itemName}</strong></td>
+            <td>${r.unit}</td>
+            <td>${r.quantity}</td>
+            <td>${r.forUser}</td>
+            <td>${r.physicalStatus}</td>
+            <td>${formatErpBadge(r.rawErp)}</td>
+            <td>${r.remarks}</td>
+          </tr>
+        `
+          )
+          .join("");
+      }
+
+      recordRange.textContent =
+        totalRecords === 0
+          ? "Showing 0 of 0"
+          : `Showing ${startIdx + 1}-${endIdx} of ${totalRecords}`;
+      pageIndicator.textContent = `Page ${currentPage} of ${totalPages}`;
+      prevPageBtn.disabled = currentPage <= 1;
+      nextPageBtn.disabled = currentPage >= totalPages;
+    }
+
+    Object.values(filterInputs).forEach((el) => {
+      el.addEventListener("input", () => applyFiltersAndRender(true));
+      el.addEventListener("change", () => applyFiltersAndRender(true));
+    });
+
+    pageSizeSelect.addEventListener("change", () => applyFiltersAndRender(true));
+    prevPageBtn.addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage -= 1;
+        applyFiltersAndRender(false);
+      }
+    });
+    nextPageBtn.addEventListener("click", () => {
+      currentPage += 1;
+      applyFiltersAndRender(false);
+    });
+
+    clearBtn.addEventListener("click", () => {
+      Object.values(filterInputs).forEach((el) => {
+        if (el.tagName === "SELECT") el.value = "all";
+        else el.value = "";
+      });
+      applyFiltersAndRender(true);
+    });
+
+    const transferRef = query(ref(db, TRANSFER_RECEIVE_NODE), limitToLast(FIREBASE_READ_LIMIT));
+    onValue(
+      transferRef,
+      (snapshot) => {
+        const rawVal = snapshot.exists() ? snapshot.val() : null;
+        if (!rawVal || typeof rawVal !== "object") {
+          masterLineRows = [];
+        } else {
+          const entries = Array.isArray(rawVal)
+            ? rawVal.map((v, i) => [String(i + 1), v])
+            : Object.entries(rawVal);
+          const rows = [];
+          for (const [key, rec] of entries) {
+            rows.push(...extractLineRows(key, rec));
+          }
+          masterLineRows = sortByReceivedDateDesc(rows);
+        }
+        applyFiltersAndRender(true);
+      },
+      (error) => {
+        tbody.innerHTML = `<tr><td colspan="14" class="empty-row">Firebase read error: ${error.message}</td></tr>`;
+      }
+    );
+  </script>
+</body>
+</html>
