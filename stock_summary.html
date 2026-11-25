@@ -309,9 +309,13 @@
       <button type="button" id="next-page-btn">Next</button>
     </div>
   </div>
-<!---Back to home---->
- <a href="index.html" class="flex items-center gap-3 px-4 py-2.5 rounded bg-blue-600 text-white font-medium" id="back">
-                <i class="fa-solid fa-chart-pie w-5"></i> Back</a>
+
+  <!-- Back to home -->
+  <div style="margin-top: 14px;">
+    <a href="index.html" class="flex items-center gap-3 px-4 py-2.5 rounded bg-blue-600 text-white font-medium" id="back">
+      <i class="fa-solid fa-chart-pie w-5"></i> Back
+    </a>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
@@ -337,6 +341,9 @@
     const db = getDatabase(app);
 
     const CANDIDATE_NODES = ["stock_summary", "stock", "inventory"];
+    const PURCHASE_NODE = "material_purchase";
+    const ISSUE_NODE = "stock_issue";
+    const TRANSFER_RECEIVE_NODE = "transfer_receive";
     const FIREBASE_READ_LIMIT = 500;
 
     const statusBadge = document.getElementById("status-badge");
@@ -368,12 +375,23 @@
 
     let masterRows = [];
     let currentPage = 1;
+    const nodeCache = {};
+    let purchaseRawData = null;
+    let issueRawData = null;
+    let transferReceiveRawData = null;
 
     function toNum(v) {
       if (v === null || v === undefined || v === "") return 0;
       const cleaned = typeof v === "string" ? v.replace(/,/g, "").trim() : v;
       const n = Number(cleaned);
       return Number.isFinite(n) ? n : 0;
+    }
+
+    function normalizeKey(name) {
+      return String(name || "")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, " ");
     }
 
     function pickField(obj, keys, fallback = "") {
@@ -385,15 +403,171 @@
       return fallback;
     }
 
-    function normalizeRows(rawVal) {
-      if (!rawVal) return [];
-      const entries = Array.isArray(rawVal)
+    function isBlankOrNa(val) {
+      if (val === undefined || val === null) return true;
+      const s = String(val).trim().toLowerCase();
+      return s === "" || s === "n/a" || s === "na" || s === "none" || s === "null";
+    }
+
+    function addToLookup(lookupMap, itemName, qty, unit) {
+      const cleanName = String(itemName || "").trim();
+      if (!cleanName) return;
+      const normKey = normalizeKey(cleanName);
+      const cleanUnit = String(unit || "").trim();
+      const numQty = toNum(qty);
+
+      if (lookupMap.has(normKey)) {
+        const existing = lookupMap.get(normKey);
+        existing.totalQty += numQty;
+        if (!existing.unit && cleanUnit) existing.unit = cleanUnit;
+      } else {
+        lookupMap.set(normKey, {
+          displayName: cleanName,
+          unit: cleanUnit,
+          totalQty: numQty
+        });
+      }
+    }
+
+    /**
+     * নির্দিষ্ট লাইন ইনডেক্স (idx) অথবা রেকর্ড লেভেলে ERP নাম্বার ফাঁকা / n/a কি না যাচাই করে
+     */
+    function isLineErpEmpty(rec, idx, erpPrefixes) {
+      for (const prefix of erpPrefixes) {
+        const indexedVal = rec[`${prefix}_${idx}`];
+        if (indexedVal !== undefined && indexedVal !== null && !isBlankOrNa(indexedVal)) {
+          return false;
+        }
+      }
+      const headerVal =
+        rec.erp_trn_no ??
+        rec.erpTrnNo ??
+        rec.erpNum ??
+        rec.erp_num ??
+        rec.erpNo ??
+        rec.erp_no ??
+        rec.erpIssue ??
+        "";
+      return isBlankOrNa(headerVal);
+    }
+
+    /**
+     * Indexed Node (itemName_1, itemName_2... এবং item_name_1, item_name_2...) থেকে
+     * ERP ফাঁকা/n/a থাকা লাইনগুলোর আইটেম অনুযায়ী মোট কোয়ান্টিটি বের করে
+     */
+    function buildIndexedQtyLookup(rawVal, qtyFieldPrefixes, erpPrefixes) {
+      const lookupMap = new Map();
+      if (!rawVal || typeof rawVal !== "object") return lookupMap;
+
+      const records = Array.isArray(rawVal) ? rawVal : Object.values(rawVal);
+
+      for (const rec of records) {
+        if (!rec || typeof rec !== "object") continue;
+
+        for (const key of Object.keys(rec)) {
+          const match = key.match(/^(?:itemName|item_name)_(\d+)$/i);
+          if (!match) continue;
+
+          const idx = match[1];
+          if (!isLineErpEmpty(rec, idx, erpPrefixes)) {
+            continue;
+          }
+
+          const rawItemName = rec[key];
+          const candidateQtyKeys = qtyFieldPrefixes.map((prefix) => `${prefix}_${idx}`);
+          const qtyVal = pickField(rec, candidateQtyKeys, 0);
+          const unitVal = pickField(rec, [`unit_${idx}`, `uom_${idx}`, `itemUnit_${idx}`], "");
+
+          addToLookup(lookupMap, rawItemName, qtyVal, unitVal);
+        }
+      }
+
+      return lookupMap;
+    }
+
+    /**
+     * transfer_receive নোড থেকে (Indexed item_name_1 / erp_trn_no_1 অথবা Flat item_name / erp_trn_no)
+     * ERP ফাঁকা বা "n/a" হলে আইটেম অনুযায়ী মোট কোয়ান্টিটি বের করে
+     */
+    function buildTransferReceiveLookup(rawVal) {
+      const lookupMap = new Map();
+      if (!rawVal || typeof rawVal !== "object") return lookupMap;
+
+      const records = Array.isArray(rawVal) ? rawVal : Object.values(rawVal);
+
+      for (const rec of records) {
+        if (!rec || typeof rec !== "object") continue;
+
+        let hasIndexedItems = false;
+        for (const key of Object.keys(rec)) {
+          const match = key.match(/^(?:item_name|itemName)_(\d+)$/i);
+          if (!match) continue;
+          hasIndexedItems = true;
+
+          const idx = match[1];
+          if (!isLineErpEmpty(rec, idx, ["erp_trn_no", "erpTrnNo", "erpNum", "erp_num", "erpNo"])) {
+            continue;
+          }
+
+          const itemName = rec[key];
+          const qtyVal = pickField(
+            rec,
+            [
+              `quantity_${idx}`,
+              `qty_${idx}`,
+              `rcvQty_${idx}`,
+              `receiveQty_${idx}`,
+              `receivedQty_${idx}`,
+              `trnQty_${idx}`,
+              `totalQty_${idx}`
+            ],
+            0
+          );
+          const unitVal = pickField(rec, [`unit_${idx}`, `uom_${idx}`, `itemUnit_${idx}`], "");
+
+          addToLookup(lookupMap, itemName, qtyVal, unitVal);
+        }
+
+        if (!hasIndexedItems) {
+          const erpVal = pickField(
+            rec,
+            ["erp_trn_no", "erpTrnNo", "erpNum", "erp_num", "erpNo", "erp_no"],
+            ""
+          );
+          if (!isBlankOrNa(erpVal)) {
+            continue;
+          }
+
+          const itemName = pickField(
+            rec,
+            ["item_name", "itemName", "name", "item", "title", "description"],
+            ""
+          );
+          const qtyVal = pickField(
+            rec,
+            ["quantity", "qty", "rcvQty", "receiveQty", "receivedQty", "trnQty", "totalQty"],
+            0
+          );
+          const unitVal = pickField(rec, ["unit", "uom", "Unit"], "");
+
+          addToLookup(lookupMap, itemName, qtyVal, unitVal);
+        }
+      }
+
+      return lookupMap;
+    }
+
+    function normalizeRows(rawVal, pendingMrrLookup, pendingTrnInLookup, pendingIssueLookup) {
+      const entries = !rawVal
+        ? []
+        : Array.isArray(rawVal)
         ? rawVal.map((v, i) => [String(i + 1), v])
         : typeof rawVal === "object"
         ? Object.entries(rawVal)
         : [];
 
       const rows = [];
+      const seenItems = new Set();
 
       for (const [key, item] of entries) {
         if (!item || typeof item !== "object") continue;
@@ -401,7 +575,23 @@
         const itemName = String(
           pickField(item, ["itemName", "item_name", "name", "item", "title", "description"], key)
         ).trim();
-        const unit = String(pickField(item, ["unit", "uom", "Unit"], "")).trim();
+        const normKey = normalizeKey(itemName);
+        seenItems.add(normKey);
+
+        const mrrEntry = pendingMrrLookup.get(normKey);
+        const trnInEntry = pendingTrnInLookup.get(normKey);
+        const issueEntry = pendingIssueLookup.get(normKey);
+
+        const unit = String(
+          pickField(
+            item,
+            ["unit", "uom", "Unit"],
+            (mrrEntry && mrrEntry.unit) ||
+              (trnInEntry && trnInEntry.unit) ||
+              (issueEntry && issueEntry.unit) ||
+              ""
+          )
+        ).trim();
 
         const rawStockQty = pickField(
           item,
@@ -424,19 +614,25 @@
           null
         );
 
-        const pendingMrrQty = toNum(
+        const baseMrrQty = toNum(
           pickField(item, ["pendingMrrQty", "pending_mrr_qty", "pendingMrr", "pending_mrr", "mrrQty"], 0)
         );
-        const pendingTrnInQty = toNum(
+        const pendingMrrQty = mrrEntry ? mrrEntry.totalQty : baseMrrQty;
+
+        const baseTrnInQty = toNum(
           pickField(
             item,
             ["pendingTrnInQty", "pending_trn_in_qty", "pendingTransferIn", "pending_transfer_in", "trnInQty", "trn_in_qty"],
             0
           )
         );
-        const pendingIssueQty = toNum(
+        const pendingTrnInQty = trnInEntry ? trnInEntry.totalQty : baseTrnInQty;
+
+        const baseIssueQty = toNum(
           pickField(item, ["pendingIssueQty", "pending_issue_qty", "pendingIssue", "pending_issue", "issueQty"], 0)
         );
+        const pendingIssueQty = issueEntry ? issueEntry.totalQty : baseIssueQty;
+
         const pendingTrnOutQty = toNum(
           pickField(
             item,
@@ -450,8 +646,14 @@
             ? toNum(rawStockQty)
             : pendingMrrQty + pendingTrnInQty - pendingIssueQty - pendingTrnOutQty;
 
-        // Keep only available (> 0) and negative (< 0) stock
-        if (totalStockQty === 0) continue;
+        if (
+          totalStockQty === 0 &&
+          pendingMrrQty === 0 &&
+          pendingTrnInQty === 0 &&
+          pendingIssueQty === 0
+        ) {
+          continue;
+        }
 
         rows.push({
           itemName,
@@ -464,7 +666,93 @@
         });
       }
 
+      const allExtraKeys = new Set([
+        ...pendingMrrLookup.keys(),
+        ...pendingTrnInLookup.keys(),
+        ...pendingIssueLookup.keys()
+      ]);
+
+      for (const normKey of allExtraKeys) {
+        if (seenItems.has(normKey)) continue;
+        const mrrEntry = pendingMrrLookup.get(normKey);
+        const trnInEntry = pendingTrnInLookup.get(normKey);
+        const issueEntry = pendingIssueLookup.get(normKey);
+
+        const mrrQty = mrrEntry ? mrrEntry.totalQty : 0;
+        const trnInQty = trnInEntry ? trnInEntry.totalQty : 0;
+        const issueQty = issueEntry ? issueEntry.totalQty : 0;
+
+        if (mrrQty === 0 && trnInQty === 0 && issueQty === 0) continue;
+
+        rows.push({
+          itemName:
+            (mrrEntry && mrrEntry.displayName) ||
+            (trnInEntry && trnInEntry.displayName) ||
+            (issueEntry && issueEntry.displayName) ||
+            normKey,
+          unit:
+            (mrrEntry && mrrEntry.unit) ||
+            (trnInEntry && trnInEntry.unit) ||
+            (issueEntry && issueEntry.unit) ||
+            "",
+          totalStockQty: mrrQty + trnInQty - issueQty,
+          pendingMrrQty: mrrQty,
+          pendingTrnInQty: trnInQty,
+          pendingIssueQty: issueQty,
+          pendingTrnOutQty: 0
+        });
+      }
+
       return rows;
+    }
+
+    function refreshAllData() {
+      const activeStockNode = CANDIDATE_NODES.find(
+        (n) => nodeCache[n] && typeof nodeCache[n] === "object"
+      );
+
+      const pendingMrrLookup = buildIndexedQtyLookup(
+        purchaseRawData,
+        [
+          "qty",
+          "quantity",
+          "rcvQty",
+          "receiveQty",
+          "receivedQty",
+          "challanQty",
+          "itemQty",
+          "totalQty"
+        ],
+        ["erpNum", "erp_num", "erpNo", "erp_no", "erpMrr"]
+      );
+
+      const pendingTrnInLookup = buildTransferReceiveLookup(transferReceiveRawData);
+
+      const pendingIssueLookup = buildIndexedQtyLookup(
+        issueRawData,
+        [
+          "quantity",
+          "qty",
+          "issueQty",
+          "issuedQty",
+          "consumptionQty",
+          "consumedQty",
+          "itemQty",
+          "totalQty"
+        ],
+        ["erpIssue", "erp_issue", "erpNum", "erp_num", "erpNo"]
+      );
+
+      masterRows = normalizeRows(
+        activeStockNode ? nodeCache[activeStockNode] : null,
+        pendingMrrLookup,
+        pendingTrnInLookup,
+        pendingIssueLookup
+      );
+
+      const stockLabel = activeStockNode ? `/${activeStockNode}` : "No stock node";
+      statusBadge.textContent = `Connected: ${stockLabel} + /${PURCHASE_NODE} + /${TRANSFER_RECEIVE_NODE} + /${ISSUE_NODE}`;
+      renderTable(true);
     }
 
     function matchNumberFilter(value, op, valInput) {
@@ -616,25 +904,14 @@
       renderTable(true);
     });
 
-    const nodeCache = {};
+    // 1. Listen to Stock Nodes
     CANDIDATE_NODES.forEach((nodeName) => {
       const boundedRef = query(ref(db, nodeName), limitToLast(FIREBASE_READ_LIMIT));
       onValue(
         boundedRef,
         (snapshot) => {
           nodeCache[nodeName] = snapshot.exists() ? snapshot.val() : null;
-
-          const activeNode = CANDIDATE_NODES.find(
-            (n) => nodeCache[n] && typeof nodeCache[n] === "object"
-          );
-          if (activeNode) {
-            masterRows = normalizeRows(nodeCache[activeNode]);
-            statusBadge.textContent = `Connected: /${activeNode} (Loaded up to ${FIREBASE_READ_LIMIT})`;
-          } else {
-            masterRows = [];
-            statusBadge.textContent = "Connected (No available or negative stock)";
-          }
-          renderTable(true);
+          refreshAllData();
         },
         (error) => {
           statusBadge.textContent = `Error: ${error.message}`;
@@ -642,6 +919,45 @@
         }
       );
     });
+
+    // 2. Listen to material_purchase Node
+    const purchaseRef = query(ref(db, PURCHASE_NODE), limitToLast(FIREBASE_READ_LIMIT));
+    onValue(
+      purchaseRef,
+      (snapshot) => {
+        purchaseRawData = snapshot.exists() ? snapshot.val() : null;
+        refreshAllData();
+      },
+      (error) => {
+        console.error("Purchase node read error:", error);
+      }
+    );
+
+    // 3. Listen to transfer_receive Node
+    const transferReceiveRef = query(ref(db, TRANSFER_RECEIVE_NODE), limitToLast(FIREBASE_READ_LIMIT));
+    onValue(
+      transferReceiveRef,
+      (snapshot) => {
+        transferReceiveRawData = snapshot.exists() ? snapshot.val() : null;
+        refreshAllData();
+      },
+      (error) => {
+        console.error("Transfer receive node read error:", error);
+      }
+    );
+
+    // 4. Listen to stock_issue Node
+    const issueRef = query(ref(db, ISSUE_NODE), limitToLast(FIREBASE_READ_LIMIT));
+    onValue(
+      issueRef,
+      (snapshot) => {
+        issueRawData = snapshot.exists() ? snapshot.val() : null;
+        refreshAllData();
+      },
+      (error) => {
+        console.error("Issue node read error:", error);
+      }
+    );
   </script>
 </body>
 </html>
