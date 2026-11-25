@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Purchase Receive Records</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f4f6f9;
+      color: #1e293b;
+    }
+    .container {
+      max-width: 1700px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      color: #0f172a;
+    }
+    .controls-group {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .date-range-box {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 0.84rem;
+      font-weight: 600;
+    }
+    .date-range-box input[type="date"] {
+      padding: 5px 7px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      background: #ffffff;
+      color: #0f172a;
+    }
+    button, .page-size-select {
+      padding: 7px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #0f172a;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover:not(:disabled) {
+      background: #f1f5f9;
+    }
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1950px;
+    }
+    th, td {
+      border: 1px solid #e2e8f0;
+      padding: 8px 8px;
+      font-size: 0.85rem;
+      text-align: center;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    thead th {
+      background: #f8fafc;
+      font-weight: 700;
+      color: #0f172a;
+      vertical-align: top;
+    }
+    .col-title {
+      margin-bottom: 6px;
+    }
+    .filter-box {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 85px;
+    }
+    .filter-box input,
+    .filter-box select {
+      width: 100%;
+      padding: 5px 6px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      background: #ffffff;
+      color: #0f172a;
+      text-align: center;
+    }
+    .filter-box input:focus,
+    .filter-box select:focus {
+      outline: none;
+      border-color: #2563eb;
+    }
+    tbody tr:hover {
+      background: #f8fafc;
+    }
+    .empty-row {
+      padding: 20px;
+      color: #64748b;
+    }
+    .status-pending {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      background: #fef3c7;
+      color: #b45309;
+    }
+    .status-posted {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      background: #dcfce7;
+      color: #15803d;
+    }
+    .pagination-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+      padding: 10px 14px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.86rem;
+    }
+    .page-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .page-info {
+      font-weight: 600;
+      color: #334155;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>Purchase Receive Records</h1>
+      <div class="controls-group">
+        <div class="date-range-box">
+          <label for="date-from">From:</label>
+          <input type="date" id="date-from" />
+          <label for="date-to">To:</label>
+          <input type="date" id="date-to" />
+        </div>
+        <button type="button" id="clear-filters-btn">Clear Filters</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>
+              <div class="col-title">Sl</div>
+              <div class="filter-box"><input type="text" id="f-sl" /></div>
+            </th>
+            <th>
+              <div class="col-title">LMR No</div>
+              <div class="filter-box"><input type="text" id="f-lmr" /></div>
+            </th>
+            <th>
+              <div class="col-title">Received Date</div>
+              <div class="filter-box"><input type="text" id="f-rec-date" /></div>
+            </th>
+            <th>
+              <div class="col-title">Supplier Name</div>
+              <div class="filter-box"><input type="text" id="f-supplier" /></div>
+            </th>
+            <th>
+              <div class="col-title">Requisition No</div>
+              <div class="filter-box"><input type="text" id="f-req-no" /></div>
+            </th>
+            <th>
+              <div class="col-title">Challan No</div>
+              <div class="filter-box"><input type="text" id="f-challan-no" /></div>
+            </th>
+            <th>
+              <div class="col-title">Challan Date</div>
+              <div class="filter-box"><input type="text" id="f-challan-date" /></div>
+            </th>
+            <th>
+              <div class="col-title">Item Name</div>
+              <div class="filter-box"><input type="text" id="f-item" /></div>
+            </th>
+            <th>
+              <div class="col-title">Unit</div>
+              <div class="filter-box"><input type="text" id="f-unit" /></div>
+            </th>
+            <th>
+              <div class="col-title">Quantity</div>
+              <div class="filter-box"><input type="text" id="f-qty" /></div>
+            </th>
+            <th>
+              <div class="col-title">Rate</div>
+              <div class="filter-box"><input type="text" id="f-rate" /></div>
+            </th>
+            <th>
+              <div class="col-title">Total</div>
+              <div class="filter-box"><input type="text" id="f-total" /></div>
+            </th>
+            <th>
+              <div class="col-title">Request For</div>
+              <div class="filter-box"><input type="text" id="f-req-for" /></div>
+            </th>
+            <th>
+              <div class="col-title">Physical Identity</div>
+              <div class="filter-box"><input type="text" id="f-phys" /></div>
+            </th>
+            <th>
+              <div class="col-title">ERP No</div>
+              <div class="filter-box">
+                <select id="f-erp-cond">
+                  <option value="all">All</option>
+                  <option value="blank">Blank</option>
+                  <option value="not_blank">Not Blank</option>
+                </select>
+                <input type="text" id="f-erp-text" />
+              </div>
+            </th>
+            <th>
+              <div class="col-title">Item Remarks</div>
+              <div class="filter-box"><input type="text" id="f-item-remarks" /></div>
+            </th>
+            <th>
+              <div class="col-title">Remarks</div>
+              <div class="filter-box"><input type="text" id="f-remarks" /></div>
+            </th>
+          </tr>
+        </thead>
+        <tbody id="purchase-receive-tbody">
+          <tr>
+            <td colspan="17" class="empty-row">Loading purchase receive records...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls (Default 100 rows per page) -->
+    <div class="pagination-bar">
+      <div class="page-controls">
+        <span>Rows per page:</span>
+        <select id="page-size" class="page-size-select">
+          <option value="50">50</option>
+          <option value="100" selected>100</option>
+          <option value="200">200</option>
+        </select>
+        <span class="page-info" id="record-range">Showing 0 of 0</span>
+      </div>
+      <div class="page-controls">
+        <button type="button" id="prev-page-btn">Previous</button>
+        <span class="page-info" id="page-indicator">Page 1 of 1</span>
+        <button type="button" id="next-page-btn">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import {
+      getDatabase,
+      ref,
+      query,
+      limitToLast,
+      onValue
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+    const defaultFirebaseConfig = {
+      apiKey: "AIzaSyCQV_4nv_ohzevtZRxLj3Aq4kVafVEiLKw",
+      authDomain: "tazul503.firebaseapp.com",
+      databaseURL: "https://tazul503-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "tazul503",
+      storageBucket: "tazul503.firebasestorage.app",
+      messagingSenderId: "190926921011",
+      appId: "1:190926921011:web:77822854066e6a840f3246"
+    };
+
+    const app = initializeApp(defaultFirebaseConfig);
+    const db = getDatabase(app);
+
+    const PURCHASE_NODE = "material_purchase";
+    const FIREBASE_READ_LIMIT = 1000;
+
+    const tbody = document.getElementById("purchase-receive-tbody");
+    const clearBtn = document.getElementById("clear-filters-btn");
+    const dateFromEl = document.getElementById("date-from");
+    const dateToEl = document.getElementById("date-to");
+
+    const pageSizeSelect = document.getElementById("page-size");
+    const prevPageBtn = document.getElementById("prev-page-btn");
+    const nextPageBtn = document.getElementById("next-page-btn");
+    const pageIndicator = document.getElementById("page-indicator");
+    const recordRange = document.getElementById("record-range");
+
+    const filterInputs = {
+      sl: document.getElementById("f-sl"),
+      lmrNo: document.getElementById("f-lmr"),
+      receivedDate: document.getElementById("f-rec-date"),
+      supplierName: document.getElementById("f-supplier"),
+      requisitionNo: document.getElementById("f-req-no"),
+      challanNo: document.getElementById("f-challan-no"),
+      challanDate: document.getElementById("f-challan-date"),
+      itemName: document.getElementById("f-item"),
+      unit: document.getElementById("f-unit"),
+      quantity: document.getElementById("f-qty"),
+      rate: document.getElementById("f-rate"),
+      total: document.getElementById("f-total"),
+      requestFor: document.getElementById("f-req-for"),
+      physicalIdentity: document.getElementById("f-phys"),
+      erpCond: document.getElementById("f-erp-cond"),
+      erpText: document.getElementById("f-erp-text"),
+      itemRemarks: document.getElementById("f-item-remarks"),
+      remarks: document.getElementById("f-remarks")
+    };
+
+    let masterLineRows = [];
+    let currentPage = 1;
+
+    function isBlankOrNa(val) {
+      if (val === undefined || val === null) return true;
+      const s = String(val).trim().toLowerCase();
+      return s === "" || s === "n/a" || s === "na" || s === "none" || s === "null";
+    }
+
+    function pickValue(obj, keys, fallback = "-") {
+      for (const k of keys) {
+        if (obj && obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim() !== "") {
+          return obj[k];
+        }
+      }
+      return fallback;
+    }
+
+    function parseDateTimestamp(dateStr) {
+      if (!dateStr || dateStr === "-") return 0;
+      const ts = Date.parse(String(dateStr).trim());
+      return Number.isFinite(ts) ? ts : 0;
+    }
+
+    function formatErpBadge(erpVal) {
+      const blank = isBlankOrNa(erpVal);
+      const display = blank
+        ? (String(erpVal ?? "").trim() || "Blank")
+        : String(erpVal).trim();
+      const cls = blank ? "status-pending" : "status-posted";
+      return `<span class="${cls}">${display}</span>`;
+    }
+
+    function extractLineRows(recordKey, rec) {
+      if (!rec || typeof rec !== "object") return [];
+
+      const lmrNo = pickValue(rec, ["lmrNo", "lmr_no", "firebaseId"], recordKey);
+      const receivedDate = pickValue(rec, ["receivedDate", "received_date"], "-");
+      const supplierName = pickValue(rec, ["supplierName", "supplier_name"], "-");
+      const requisitionNo = pickValue(rec, ["requisitionNo", "requisition_no"], "-");
+      const challanNo = pickValue(rec, ["challanNo", "challan_no"], "-");
+      const challanDate = pickValue(rec, ["challanDate", "challan_date"], "-");
+      const headerRemarks = pickValue(rec, ["remarks"], "-");
+      const headerErp = rec.erpNum ?? rec.erp_num ?? rec.erpNo ?? "";
+      const createdAtTs = rec.createdAt ? Date.parse(String(rec.createdAt)) || 0 : 0;
+
+      const indices = new Set();
+      for (const key of Object.keys(rec)) {
+        const match = key.match(/^itemName_(\d+)$/i);
+        if (match) {
+          indices.add(match[1]);
+        }
+      }
+
+      const sortedIndices = Array.from(indices).sort((a, b) => Number(a) - Number(b));
+      const lineRows = [];
+
+      if (sortedIndices.length > 0) {
+        for (const idx of sortedIndices) {
+          const itemName = pickValue(rec, [`itemName_${idx}`], "");
+          if (!itemName || itemName === "-") continue;
+
+          const rawErp = rec[`erpNum_${idx}`] ?? rec[`erp_num_${idx}`] ?? headerErp;
+          lineRows.push({
+            lmrNo: String(lmrNo),
+            receivedDate: String(receivedDate),
+            receivedDateTs: parseDateTimestamp(receivedDate),
+            createdAtTs,
+            lineIdx: Number(idx) || 0,
+            supplierName: String(supplierName),
+            requisitionNo: String(requisitionNo),
+            challanNo: String(challanNo),
+            challanDate: String(challanDate),
+            itemName: String(itemName),
+            unit: String(pickValue(rec, [`unit_${idx}`], "-")),
+            quantity: String(pickValue(rec, [`quantity_${idx}`, `qty_${idx}`], "-")),
+            rate: String(pickValue(rec, [`rate_${idx}`], "-")),
+            total: String(pickValue(rec, [`total_${idx}`], "-")),
+            requestFor: String(pickValue(rec, [`requestFor_${idx}`], "-")),
+            physicalIdentity: String(pickValue(rec, [`physicalIdentity_${idx}`], "-")),
+            rawErp: String(rawErp),
+            isErpBlank: isBlankOrNa(rawErp),
+            itemRemarks: String(pickValue(rec, [`itemRemarks_${idx}`], "-")),
+            remarks: String(headerRemarks)
+          });
+        }
+      }
+
+      return lineRows;
+    }
+
+    function sortByReceivedDateDesc(rows) {
+      return [...rows].sort((a, b) => {
+        if (b.receivedDateTs !== a.receivedDateTs) {
+          return b.receivedDateTs - a.receivedDateTs;
+        }
+        const dateCmp = b.receivedDate.localeCompare(a.receivedDate);
+        if (dateCmp !== 0) return dateCmp;
+        if (b.createdAtTs !== a.createdAtTs) {
+          return b.createdAtTs - a.createdAtTs;
+        }
+        const lmrCmp = b.lmrNo.localeCompare(a.lmrNo, undefined, { numeric: true });
+        if (lmrCmp !== 0) return lmrCmp;
+        return a.lineIdx - b.lineIdx;
+      });
+    }
+
+    function applyFiltersAndRender(resetPage = false) {
+      if (resetPage) currentPage = 1;
+
+      const fromDate = dateFromEl.value;
+      const toDate = dateToEl.value;
+      const fromTs = fromDate ? Date.parse(fromDate) : null;
+      const toTs = toDate ? Date.parse(toDate) : null;
+
+      const qLmr = filterInputs.lmrNo.value.trim().toLowerCase();
+      const qRecDate = filterInputs.receivedDate.value.trim().toLowerCase();
+      const qSupplier = filterInputs.supplierName.value.trim().toLowerCase();
+      const qReqNo = filterInputs.requisitionNo.value.trim().toLowerCase();
+      const qChallanNo = filterInputs.challanNo.value.trim().toLowerCase();
+      const qChallanDate = filterInputs.challanDate.value.trim().toLowerCase();
+      const qItem = filterInputs.itemName.value.trim().toLowerCase();
+      const qUnit = filterInputs.unit.value.trim().toLowerCase();
+      const qQty = filterInputs.quantity.value.trim().toLowerCase();
+      const qRate = filterInputs.rate.value.trim().toLowerCase();
+      const qTotal = filterInputs.total.value.trim().toLowerCase();
+      const qReqFor = filterInputs.requestFor.value.trim().toLowerCase();
+      const qPhys = filterInputs.physicalIdentity.value.trim().toLowerCase();
+      const erpCond = filterInputs.erpCond.value;
+      const qErpText = filterInputs.erpText.value.trim().toLowerCase();
+      const qItemRemarks = filterInputs.itemRemarks.value.trim().toLowerCase();
+      const qRemarks = filterInputs.remarks.value.trim().toLowerCase();
+      const qSl = filterInputs.sl.value.trim().toLowerCase();
+
+      const matched = masterLineRows.filter((r) => {
+        if (fromTs !== null && (!r.receivedDateTs || r.receivedDateTs < fromTs)) return false;
+        if (toTs !== null && (!r.receivedDateTs || r.receivedDateTs > toTs)) return false;
+
+        if (qLmr && !r.lmrNo.toLowerCase().includes(qLmr)) return false;
+        if (qRecDate && !r.receivedDate.toLowerCase().includes(qRecDate)) return false;
+        if (qSupplier && !r.supplierName.toLowerCase().includes(qSupplier)) return false;
+        if (qReqNo && !r.requisitionNo.toLowerCase().includes(qReqNo)) return false;
+        if (qChallanNo && !r.challanNo.toLowerCase().includes(qChallanNo)) return false;
+        if (qChallanDate && !r.challanDate.toLowerCase().includes(qChallanDate)) return false;
+        if (qItem && !r.itemName.toLowerCase().includes(qItem)) return false;
+        if (qUnit && !r.unit.toLowerCase().includes(qUnit)) return false;
+        if (qQty && !r.quantity.toLowerCase().includes(qQty)) return false;
+        if (qRate && !r.rate.toLowerCase().includes(qRate)) return false;
+        if (qTotal && !r.total.toLowerCase().includes(qTotal)) return false;
+        if (qReqFor && !r.requestFor.toLowerCase().includes(qReqFor)) return false;
+        if (qPhys && !r.physicalIdentity.toLowerCase().includes(qPhys)) return false;
+        if (qItemRemarks && !r.itemRemarks.toLowerCase().includes(qItemRemarks)) return false;
+        if (qRemarks && !r.remarks.toLowerCase().includes(qRemarks)) return false;
+
+        if (erpCond === "blank" && !r.isErpBlank) return false;
+        if (erpCond === "not_blank" && r.isErpBlank) return false;
+        if (qErpText && !r.rawErp.toLowerCase().includes(qErpText)) return false;
+
+        return true;
+      });
+
+      const withSl = matched.map((r, idx) => ({ ...r, sl: String(idx + 1) }));
+      const finalRows = !qSl
+        ? withSl
+        : withSl.filter((r) => r.sl.toLowerCase().includes(qSl));
+
+      const pageSize = Number(pageSizeSelect.value) || 100;
+      const totalRecords = finalRows.length;
+      const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
+
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+
+      const startIdx = (currentPage - 1) * pageSize;
+      const endIdx = Math.min(startIdx + pageSize, totalRecords);
+      const pageRows = finalRows.slice(startIdx, endIdx);
+
+      if (!pageRows.length) {
+        tbody.innerHTML = `<tr><td colspan="17" class="empty-row">No matching purchase receive records found.</td></tr>`;
+      } else {
+        tbody.innerHTML = pageRows
+          .map(
+            (r) => `
+          <tr>
+            <td>${r.sl}</td>
+            <td>${r.lmrNo}</td>
+            <td>${r.receivedDate}</td>
+            <td>${r.supplierName}</td>
+            <td>${r.requisitionNo}</td>
+            <td>${r.challanNo}</td>
+            <td>${r.challanDate}</td>
+            <td><strong>${r.itemName}</strong></td>
+            <td>${r.unit}</td>
+            <td>${r.quantity}</td>
+            <td>${r.rate}</td>
+            <td>${r.total}</td>
+            <td>${r.requestFor}</td>
+            <td>${r.physicalIdentity}</td>
+            <td>${formatErpBadge(r.rawErp)}</td>
+            <td>${r.itemRemarks}</td>
+            <td>${r.remarks}</td>
+          </tr>
+        `
+          )
+          .join("");
+      }
+
+      recordRange.textContent =
+        totalRecords === 0
+          ? "Showing 0 of 0"
+          : `Showing ${startIdx + 1}-${endIdx} of ${totalRecords}`;
+      pageIndicator.textContent = `Page ${currentPage} of ${totalPages}`;
+      prevPageBtn.disabled = currentPage <= 1;
+      nextPageBtn.disabled = currentPage >= totalPages;
+    }
+
+    dateFromEl.addEventListener("change", () => applyFiltersAndRender(true));
+    dateToEl.addEventListener("change", () => applyFiltersAndRender(true));
+
+    Object.values(filterInputs).forEach((el) => {
+      el.addEventListener("input", () => applyFiltersAndRender(true));
+      el.addEventListener("change", () => applyFiltersAndRender(true));
+    });
+
+    pageSizeSelect.addEventListener("change", () => applyFiltersAndRender(true));
+    prevPageBtn.addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage -= 1;
+        applyFiltersAndRender(false);
+      }
+    });
+    nextPageBtn.addEventListener("click", () => {
+      currentPage += 1;
+      applyFiltersAndRender(false);
+    });
+
+    clearBtn.addEventListener("click", () => {
+      dateFromEl.value = "";
+      dateToEl.value = "";
+      Object.values(filterInputs).forEach((el) => {
+        if (el.tagName === "SELECT") el.value = "all";
+        else el.value = "";
+      });
+      applyFiltersAndRender(true);
+    });
+
+    const purchaseRef = query(ref(db, PURCHASE_NODE), limitToLast(FIREBASE_READ_LIMIT));
+    onValue(
+      purchaseRef,
+      (snapshot) => {
+        const rawVal = snapshot.exists() ? snapshot.val() : null;
+        if (!rawVal || typeof rawVal !== "object") {
+          masterLineRows = [];
+        } else {
+          const entries = Array.isArray(rawVal)
+            ? rawVal.map((v, i) => [String(i + 1), v])
+            : Object.entries(rawVal);
+          const rows = [];
+          for (const [key, rec] of entries) {
+            rows.push(...extractLineRows(key, rec));
+          }
+          masterLineRows = sortByReceivedDateDesc(rows);
+        }
+        applyFiltersAndRender(true);
+      },
+      (error) => {
+        tbody.innerHTML = `<tr><td colspan="17" class="empty-row">Firebase read error: ${error.message}</td></tr>`;
+      }
+    );
+  </script>
+</body>
+</html>
